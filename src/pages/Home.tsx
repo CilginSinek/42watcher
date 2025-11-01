@@ -190,7 +190,12 @@ function Home() {
                 className="student-card"
                 onClick={() => handleStudentClick(student)}
               >
-                <img src={student.image.versions.medium} alt={student.login} className="student-avatar" />
+                <div className="student-card-header">
+                  <img src={student.image.versions.medium} alt={student.login} className="student-avatar" />
+                  {student.cheats && student.cheats.length > 0 && (
+                    <span className="badge cheater">🚨 CHEATER</span>
+                  )}
+                </div>
                 <div className="student-info">
                   <h3>
                     <a 
