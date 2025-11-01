@@ -259,6 +259,16 @@
   color: white;
 }
 
+.badge.sinker {
+  background: #64748b;
+  color: white;
+}
+
+.badge.freeze {
+  background: #06b6d4;
+  color: white;
+}
+
 .badge.cheater {
   background: linear-gradient(135deg, #ff0000, #8b0000);
   color: white;

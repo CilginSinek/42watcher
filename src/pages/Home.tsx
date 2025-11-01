@@ -26,6 +26,8 @@ interface Student {
   'alumni?': boolean;
   is_piscine: boolean;
   is_trans: boolean;
+  freeze: boolean | null;
+  sinker: boolean | null;
   cheats?: Cheat[];
 }
 
@@ -97,6 +99,8 @@ function Home() {
   const getStatusBadge = (student: Student) => {
     if (student.blackholed) return <span className="badge blackhole">⚫ Blackhole</span>;
     if (student.is_piscine) return <span className="badge piscine">🏊 Piscine</span>;
+    if (student.sinker) return <span className="badge sinker">⚓ Sinker</span>;
+    if (student.freeze) return <span className="badge freeze">❄️ Freeze</span>;
     if (student.is_trans) return <span className="badge transfer">🔄 Transcender</span>;
     if (student['alumni?']) return <span className="badge alumni">🎓 Alumni</span>;
     if (student['active?']) return <span className="badge active">✅ Active</span>;
@@ -155,6 +159,8 @@ function Home() {
             <option value="piscine">Piscine</option>
             <option value="transfer">Transcender</option>
             <option value="alumni">Alumni</option>
+            <option value="sinker">Sinker</option>
+            <option value="freeze">Freeze</option>
             <option value="cheaters">Cheaters</option>
           </select>
 

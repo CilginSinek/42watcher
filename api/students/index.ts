@@ -84,10 +84,17 @@ const studentSchema = new mongoose.Schema({
   alumnized_at: Date,
   "alumni?": Boolean,
   "active?": Boolean,
+  // Milestone bilgileri
   blackholed: { type: Boolean, default: null },
   next_milestone: { type: String, default: null },
+  // Piscine durumu (pool_month/pool_year şu an veya gelecekteyse true)
   is_piscine: { type: Boolean, default: false },
-  is_trans: { type: Boolean, default: false }
+  // Transfer öğrenci durumu (alumni olursa false)
+  is_trans: { type: Boolean, default: false },
+  // Freeze durumu (inactive + agu var)
+  freeze: { type: Boolean, default: null },
+  // Sinker durumu (inactive + agu yok)
+  sinker: { type: Boolean, default: null }
 }, { timestamps: true });
 
 const Student = mongoose.models.Student || mongoose.model("Student", studentSchema);
@@ -178,6 +185,12 @@ export default async function handler(
           break;
         case 'alumni':
           filter['alumni?'] = true;
+          break;
+        case 'sinker':
+          filter.sinker = true;
+          break;
+        case 'freeze':
+          filter.freeze = true;
           break;
         case 'cheaters': {
           // Cheaters filter: Get distinct logins from Cheater collection
