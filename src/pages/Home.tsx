@@ -19,6 +19,13 @@ interface Student {
   'alumni?': boolean;
   is_piscine: boolean;
   is_trans: boolean;
+  cheats?: Cheat[];
+}
+
+interface Cheat {
+  project: string;
+  score: number;
+  date: string;
 }
 
 interface PaginationInfo {
@@ -36,6 +43,8 @@ function Home() {
   const [status, setStatus] = useState('all');
   const [sortBy, setSortBy] = useState('login');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
     page: 1,
@@ -83,6 +92,25 @@ function Home() {
     if (student['alumni?']) return <span className="badge alumni">🎓 Alumni</span>;
     if (student['active?']) return <span className="badge active">✅ Active</span>;
     return <span className="badge inactive">❌ Inactive</span>;
+  };
+
+  const handleStudentClick = async (student: Student) => {
+    setSelectedStudent(student);
+    setShowModal(true);
+    
+    // Fetch cheats for this student
+    try {
+      const response = await axios.get(`/api/cheats?login=${student.login}`);
+      setSelectedStudent({ ...student, cheats: response.data.cheats });
+    } catch (error) {
+      console.error('Error fetching cheats:', error);
+      setSelectedStudent({ ...student, cheats: [] });
+    }
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedStudent(null);
   };
 
   return (
@@ -149,10 +177,23 @@ function Home() {
         <>
           <div className="students-grid">
             {students.map((student) => (
-              <div key={student.id} className="student-card">
+              <div 
+                key={student.id} 
+                className="student-card"
+                onClick={() => handleStudentClick(student)}
+              >
                 <img src={student.image.link} alt={student.login} className="student-avatar" />
                 <div className="student-info">
-                  <h3>{student.displayname || student.login}</h3>
+                  <h3>
+                    <a 
+                      href={`https://profile.intra.42.fr/users/${student.login}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {student.displayname || student.login}
+                    </a>
+                  </h3>
                   <p className="login">@{student.login}</p>
                   {getStatusBadge(student)}
                   <div className="student-stats">
@@ -187,6 +228,47 @@ function Home() {
             </button>
           </div>
         </>
+      )}
+
+      {showModal && selectedStudent && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>
+                <a 
+                  href={`https://profile.intra.42.fr/users/${selectedStudent.login}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#667eea', textDecoration: 'none' }}
+                >
+                  {selectedStudent.displayname || selectedStudent.login}
+                </a>
+              </h2>
+              <button className="close-btn" onClick={closeModal}>×</button>
+            </div>
+
+            {selectedStudent.cheats === undefined ? (
+              <div className="loading">Loading cheats...</div>
+            ) : selectedStudent.cheats.length === 0 ? (
+              <div className="no-cheats">
+                No cheating records found
+              </div>
+            ) : (
+              <div className="cheat-list">
+                <h3 style={{ color: '#ef4444', marginBottom: '1rem' }}>
+                  ⚠️ Cheating Records ({selectedStudent.cheats.length})
+                </h3>
+                {selectedStudent.cheats.map((cheat, index) => (
+                  <div key={index} className="cheat-item">
+                    <h4>{cheat.project}</h4>
+                    <p><strong>Score:</strong> {cheat.score}</p>
+                    <p><strong>Date:</strong> {new Date(cheat.date).toLocaleDateString()}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
