@@ -227,31 +227,34 @@ export default async function handler(
     ]);
 
     // Fetch cheats for all students in one query
-    const studentLogins = students.map((s: any) => s.login);
+    const studentLogins = students.map((s: Record<string, unknown>) => s.login as string);
     const cheats = await Cheater.find({ login: { $in: studentLogins } })
       .select('-__v')
       .lean();
 
     // Group cheats by login
-    const cheatsByLogin = cheats.reduce((acc: Record<string, any[]>, cheat: any) => {
-      if (!acc[cheat.login]) {
-        acc[cheat.login] = [];
+    const cheatsByLogin = cheats.reduce((acc: Record<string, Record<string, unknown>[]>, cheat: Record<string, unknown>) => {
+      const login = cheat.login as string;
+      if (!acc[login]) {
+        acc[login] = [];
       }
-      acc[cheat.login].push(cheat);
+      acc[login].push(cheat);
       return acc;
     }, {});
 
     // Add cheats to each student
-    let studentsWithCheats = students.map((student: any) => ({
+    let studentsWithCheats = students.map((student: Record<string, unknown>) => ({
       ...student,
-      cheats: cheatsByLogin[student.login] || [],
-      cheat_count: (cheatsByLogin[student.login] || []).length
+      cheats: cheatsByLogin[student.login as string] || [],
+      cheat_count: (cheatsByLogin[student.login as string] || []).length
     }));
 
     // Sort by cheat count if needed
     if (isCheatCountSort) {
-      studentsWithCheats.sort((a: any, b: any) => {
-        return sortOrder === 1 ? a.cheat_count - b.cheat_count : b.cheat_count - a.cheat_count;
+      studentsWithCheats.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+        const aCount = a.cheat_count as number;
+        const bCount = b.cheat_count as number;
+        return sortOrder === 1 ? aCount - bCount : bCount - aCount;
       });
       // Apply pagination after sorting
       studentsWithCheats = studentsWithCheats.slice(skip, skip + limitNum);
