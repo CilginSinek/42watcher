@@ -157,6 +157,7 @@
 .stats {
   display: flex;
   gap: 2rem;
+  padding-left: 2rem;
   color: white;
   font-weight: 600;
   font-size: 1rem;
