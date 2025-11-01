@@ -36,10 +36,10 @@ export default async function handler(
       },
       body: JSON.stringify({
         grant_type: 'authorization_code',
-        client_id: process.env.VITE_42_CLIENT_ID,
-        client_secret: process.env.VITE_42_CLIENT_SECRET,
+        client_id: process.env.FORTYTWO_CLIENT_ID,
+        client_secret: process.env.FORTYTWO_CLIENT_SECRET,
         code: code,
-        redirect_uri: process.env.VITE_42_REDIRECT_URI,
+        redirect_uri: process.env.FORTYTWO_REDIRECT_URI,
       }),
     });
 
