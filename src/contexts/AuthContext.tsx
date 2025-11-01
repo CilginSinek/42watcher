@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const fetchUserData = async (token: string) => {
     try {
-      const response = await axios.get('https://api.intra.42.fr/v2/me', {
+      const response = await axios.get('/api/user/me', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
