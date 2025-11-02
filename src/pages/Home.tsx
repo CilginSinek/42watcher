@@ -103,6 +103,18 @@ function Home() {
     }
   };
 
+  const handleClearSearch = () => {
+    setSearch('');
+    // Force refetch after clearing search
+    setTimeout(() => {
+      if (pagination.page !== 1) {
+        setPagination(prev => ({ ...prev, page: 1 }));
+      } else {
+        fetchStudents();
+      }
+    }, 0);
+  };
+
   const handleFilterChange = (setter: (value: string) => void, value: string) => {
     setter(value);
     if (pagination.page !== 1) {
@@ -162,14 +174,7 @@ function Home() {
               {search && (
                 <button 
                   type="button" 
-                  onClick={() => {
-                    setSearch('');
-                    if (pagination.page !== 1) {
-                      setPagination(prev => ({ ...prev, page: 1 }));
-                    } else {
-                      fetchStudents();
-                    }
-                  }}
+                  onClick={handleClearSearch}
                   className="clear-btn"
                   aria-label="Clear search"
                 >
