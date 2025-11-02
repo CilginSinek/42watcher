@@ -92,12 +92,22 @@ function Home() {
   useEffect(() => {
     fetchStudents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, sortBy, order, status, campusId]);
+  }, [pagination.page, sortBy, order, status, campusId, search]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setPagination(prev => ({ ...prev, page: 1 }));
-    fetchStudents();
+    if (pagination.page !== 1) {
+      setPagination(prev => ({ ...prev, page: 1 }));
+    } else {
+      fetchStudents();
+    }
+  };
+
+  const handleFilterChange = (setter: (value: string) => void, value: string) => {
+    setter(value);
+    if (pagination.page !== 1) {
+      setPagination(prev => ({ ...prev, page: 1 }));
+    }
   };
 
   const getStatusBadge = (student: Student) => {
@@ -164,13 +174,13 @@ function Home() {
           </div>
           
           <div className="filter-controls">
-            <select value={campusId} onChange={(e) => setCampusId(e.target.value)} className="filter-select">
+            <select value={campusId} onChange={(e) => handleFilterChange(setCampusId, e.target.value)} className="filter-select">
               <option value="all">All Campuses</option>
               <option value="49">Istanbul</option>
               <option value="50">Kocaeli</option>
             </select>
 
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="filter-select">
+            <select value={status} onChange={(e) => handleFilterChange(setStatus, e.target.value)} className="filter-select">
               <option value="all">All Students</option>
               <option value="active">Active</option>
               <option value="blackhole">Blackhole</option>
@@ -182,7 +192,7 @@ function Home() {
               <option value="cheaters">Cheaters</option>
             </select>
 
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="filter-select">
+            <select value={sortBy} onChange={(e) => handleFilterChange(setSortBy, e.target.value)} className="filter-select">
               <option value="login">Login</option>
               <option value="correction_point">Correction Points</option>
               <option value="wallet">Wallet</option>
@@ -191,7 +201,12 @@ function Home() {
             </select>
 
             <button 
-              onClick={() => setOrder(order === 'asc' ? 'desc' : 'asc')}
+              onClick={() => {
+                setOrder(order === 'asc' ? 'desc' : 'asc');
+                if (pagination.page !== 1) {
+                  setPagination(prev => ({ ...prev, page: 1 }));
+                }
+              }}
               className="order-btn"
               type="button"
             >
