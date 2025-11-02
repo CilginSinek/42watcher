@@ -127,7 +127,7 @@ function Home() {
       <div className="home-content">
         <header className="home-header">
           <div className="header-content">
-            <h1>42 Watcher</h1>
+            <h1><a href="/" className="header-link">42 Watcher</a></h1>
             {user && (
               <div className="user-info">
                 <img src={user.image.link} alt={user.login} />
@@ -140,13 +140,28 @@ function Home() {
 
       <div className="filters-section">
         <form onSubmit={handleSearch} className="search-form">
-          <input
-            type="text"
-            placeholder="Search by login, name, or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
+          <div className="search-row">
+            <div className="search-input-wrapper">
+              <input
+                type="text"
+                placeholder="Search by login, name, or email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="search-input"
+              />
+              {search && (
+                <button 
+                  type="button" 
+                  onClick={() => setSearch('')}
+                  className="clear-btn"
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <button type="submit" className="search-btn">🔍 Search</button>
+          </div>
           
           <div className="filter-controls">
             <select value={campusId} onChange={(e) => setCampusId(e.target.value)} className="filter-select">
@@ -183,8 +198,6 @@ function Home() {
               {order === 'asc' ? '↑ Ascending' : '↓ Descending'}
             </button>
           </div>
-
-          <button type="submit" className="search-btn">🔍 Search</button>
         </form>
 
         <div className="stats">
