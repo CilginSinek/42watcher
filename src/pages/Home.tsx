@@ -147,43 +147,45 @@ function Home() {
             onChange={(e) => setSearch(e.target.value)}
             className="search-input"
           />
+          
+          <div className="filter-controls">
+            <select value={campusId} onChange={(e) => setCampusId(e.target.value)} className="filter-select">
+              <option value="all">All Campuses</option>
+              <option value="49">Istanbul</option>
+              <option value="50">Kocaeli</option>
+            </select>
+
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className="filter-select">
+              <option value="all">All Students</option>
+              <option value="active">Active</option>
+              <option value="blackhole">Blackhole</option>
+              <option value="piscine">Piscine</option>
+              <option value="transfer">Transcender</option>
+              <option value="alumni">Alumni</option>
+              <option value="sinker">Sinker</option>
+              <option value="freeze">Freeze</option>
+              <option value="cheaters">Cheaters</option>
+            </select>
+
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="filter-select">
+              <option value="login">Login</option>
+              <option value="correction_point">Correction Points</option>
+              <option value="wallet">Wallet</option>
+              <option value="created_at">Created Date</option>
+              <option value="cheat_count">Cheat Count</option>
+            </select>
+
+            <button 
+              onClick={() => setOrder(order === 'asc' ? 'desc' : 'asc')}
+              className="order-btn"
+              type="button"
+            >
+              {order === 'asc' ? '↑ Ascending' : '↓ Descending'}
+            </button>
+          </div>
+
           <button type="submit" className="search-btn">🔍 Search</button>
         </form>
-
-        <div className="filter-controls">
-          <select value={campusId} onChange={(e) => setCampusId(e.target.value)} className="filter-select">
-            <option value="all">All Campuses</option>
-            <option value="49">Istanbul</option>
-            <option value="50">Kocaeli</option>
-          </select>
-
-          <select value={status} onChange={(e) => setStatus(e.target.value)} className="filter-select">
-            <option value="all">All Students</option>
-            <option value="active">Active</option>
-            <option value="blackhole">Blackhole</option>
-            <option value="piscine">Piscine</option>
-            <option value="transfer">Transcender</option>
-            <option value="alumni">Alumni</option>
-            <option value="sinker">Sinker</option>
-            <option value="freeze">Freeze</option>
-            <option value="cheaters">Cheaters</option>
-          </select>
-
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="filter-select">
-            <option value="login">Login</option>
-            <option value="correction_point">Correction Points</option>
-            <option value="wallet">Wallet</option>
-            <option value="created_at">Created Date</option>
-            <option value="cheat_count">Cheat Count</option>
-          </select>
-
-          <button 
-            onClick={() => setOrder(order === 'asc' ? 'desc' : 'asc')}
-            className="order-btn"
-          >
-            {order === 'asc' ? '↑ Ascending' : '↓ Descending'}
-          </button>
-        </div>
 
         <div className="stats">
           <span>Total: {pagination.total} students</span>
