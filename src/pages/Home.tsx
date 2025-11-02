@@ -92,7 +92,7 @@ function Home() {
   useEffect(() => {
     fetchStudents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, sortBy, order, status, campusId, search]);
+  }, [pagination.page, sortBy, order, status, campusId]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,7 +162,14 @@ function Home() {
               {search && (
                 <button 
                   type="button" 
-                  onClick={() => setSearch('')}
+                  onClick={() => {
+                    setSearch('');
+                    if (pagination.page !== 1) {
+                      setPagination(prev => ({ ...prev, page: 1 }));
+                    } else {
+                      fetchStudents();
+                    }
+                  }}
                   className="clear-btn"
                   aria-label="Clear search"
                 >
