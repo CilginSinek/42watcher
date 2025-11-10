@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import './Students.css';
 
@@ -170,8 +170,8 @@ function Students() {
           <div className="header-content">
             <h1><a href="/dashboard" className="header-link">42 Watcher</a></h1>
             <nav className="nav-links">
-              <a href="/dashboard" className="nav-link">Dashboard</a>
-              <a href="/students" className="nav-link active">Students</a>
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
+              <Link to="/students" className="nav-link active">Students</Link>
             </nav>
             {user && (
               <div className="user-info">
