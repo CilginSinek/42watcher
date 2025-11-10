@@ -244,8 +244,8 @@ function Dashboard() {
               className="campus-filter"
             >
               <option value="all">All Campuses</option>
-              <option value="55">Kocaeli</option>
-              <option value="53">Istanbul</option>
+              <option value="50">Kocaeli</option>
+              <option value="49">Istanbul</option>
             </select>
           </div>
           {user && (
