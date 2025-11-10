@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCache } from '../contexts/CacheContext';
 import { useSearchParams, Link } from 'react-router-dom';
@@ -79,9 +79,6 @@ function Students() {
   );
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Debounce için
-  const debounceTimeout = useRef<number | null>(null);
-
   const fetchStudents = async () => {
     setLoading(true);
     try {
@@ -110,17 +107,6 @@ function Students() {
     }
   };
 
-  // Debounced search
-  const debouncedFetch = useCallback(() => {
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
-    }
-    debounceTimeout.current = setTimeout(() => {
-      fetchStudents();
-    }, 500);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, sortBy, order, status, campusId, search, token]);
-
   useEffect(() => {
     // İlk yüklemede cache varsa fetch yapma
     if (isInitialLoad && studentsData) {
@@ -128,13 +114,13 @@ function Students() {
       return;
     }
     
-    debouncedFetch();
-    return () => {
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
-    };
-  }, [debouncedFetch, isInitialLoad, studentsData]);
+    // Token yoksa fetch yapma
+    if (!token) return;
+    
+    // Sadece filter/sort/pagination değişikliklerinde fetch at (search hariç)
+    fetchStudents();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.page, sortBy, order, status, campusId, token]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -464,14 +450,17 @@ function Students() {
                           <div key={index} className={`project-item status-${project.status}`}>
                             <h4>{project.project}</h4>
                             <div className="project-details">
-                              <span className={`score ${project.score >= 80 ? 'high' : project.score >= 50 ? 'mid' : 'low'}`}>
+                              <span className={`score ${
+                                project.status === 'success' 
+                                  ? 'high' 
+                                  : project.status === 'fail' 
+                                    ? 'low' 
+                                    : 'mid'
+                              }`}>
                                 ⭐ {project.score}
                               </span>
                               <span className="date">
                                 📅 {new Date(project.date).toLocaleDateString()}
-                              </span>
-                              <span className={`status-badge status-${project.status}`}>
-                                {project.status}
                               </span>
                             </div>
                           </div>

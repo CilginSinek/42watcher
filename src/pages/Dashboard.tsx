@@ -560,14 +560,17 @@ function Dashboard() {
                           <div key={index} className={`project-item status-${project.status}`}>
                             <h4>{project.project}</h4>
                             <div className="project-details">
-                              <span className={`score ${project.score >= 80 ? 'high' : project.score >= 50 ? 'mid' : 'low'}`}>
+                              <span className={`score ${
+                                project.status === 'success' 
+                                  ? 'high' 
+                                  : project.status === 'fail' 
+                                    ? 'low' 
+                                    : 'mid'
+                              }`}>
                                 ⭐ {project.score}
                               </span>
                               <span className="date">
                                 📅 {new Date(project.date).toLocaleDateString()}
-                              </span>
-                              <span className={`status-badge status-${project.status}`}>
-                                {project.status}
                               </span>
                             </div>
                           </div>
