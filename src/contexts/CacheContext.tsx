@@ -1,30 +1,41 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
 interface CacheContextType {
-  dashboardData: unknown;
-  setDashboardData: (data: unknown) => void;
+  dashboardCache: Record<string, unknown>;
+  setDashboardCache: (campusId: string, data: unknown) => void;
+  getDashboardCache: (campusId: string) => unknown;
   studentsData: unknown;
   setStudentsData: (data: unknown) => void;
   clearCache: () => void;
 }
 
-const CacheContext = createContext<CacheContextType | undefined>(undefined);
+// eslint-disable-next-line react-refresh/only-export-components
+export const CacheContext = createContext<CacheContextType | undefined>(undefined);
 
 export function CacheProvider({ children }: { children: ReactNode }) {
-  const [dashboardData, setDashboardData] = useState<unknown>(null);
+  const [dashboardCache, setDashboardCacheState] = useState<Record<string, unknown>>({});
   const [studentsData, setStudentsData] = useState<unknown>(null);
 
+  const setDashboardCache = (campusId: string, data: unknown) => {
+    setDashboardCacheState(prev => ({ ...prev, [campusId]: data }));
+  };
+
+  const getDashboardCache = (campusId: string) => {
+    return dashboardCache[campusId];
+  };
+
   const clearCache = () => {
-    setDashboardData(null);
+    setDashboardCacheState({});
     setStudentsData(null);
   };
 
   return (
     <CacheContext.Provider
       value={{
-        dashboardData,
-        setDashboardData,
+        dashboardCache,
+        setDashboardCache,
+        getDashboardCache,
         studentsData,
         setStudentsData,
         clearCache,
@@ -34,11 +45,3 @@ export function CacheProvider({ children }: { children: ReactNode }) {
     </CacheContext.Provider>
   );
 }
-
-export const useCache = () => {
-  const context = useContext(CacheContext);
-  if (context === undefined) {
-    throw new Error('useCache must be used within a CacheProvider');
-  }
-  return context;
-};

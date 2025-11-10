@@ -357,6 +357,18 @@
   color: white;
 }
 
+.badge.staff {
+  background: #10b981;
+  color: white;
+  font-weight: 600;
+}
+
+.badge.test {
+  background: #f97316;
+  color: white;
+  font-weight: 600;
+}
+
 .badge.inactive {
   background: #ef4444;
   color: white;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useCache } from '../contexts/CacheContext';
+import { useCache } from '../contexts/useCache';
 import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import './Students.css';
@@ -43,6 +43,8 @@ interface Student {
   freeze: boolean | null;
   sinker: boolean | null;
   grade: string | null;
+  'staff?': boolean;
+  is_test: boolean;
   projects?: Project[];
   project_count?: number;
   has_cheats?: boolean;
@@ -68,7 +70,6 @@ function Students() {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [status, setStatus] = useState('all');
   const [campusId, setCampusId] = useState('all');
-  const [grade, setGrade] = useState('all');
   const [sortBy, setSortBy] = useState('login');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -90,8 +91,7 @@ function Students() {
         order,
         ...(search && { search }),
         ...(status !== 'all' && { status }),
-        ...(campusId !== 'all' && { campusId }),
-        ...(grade !== 'all' && { grade })
+        ...(campusId !== 'all' && { campusId })
       });
 
       const response = await axios.get(`/api/students?${params}`, {
@@ -122,7 +122,7 @@ function Students() {
     // Sadece filter/sort/pagination değişikliklerinde fetch at (search hariç)
     fetchStudents();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, sortBy, order, status, campusId, grade, token]);
+  }, [pagination.page, sortBy, order, status, campusId, token]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +141,8 @@ function Students() {
   };
 
   const getStatusBadge = (student: Student) => {
+    if (student['staff?']) return <span className="badge staff">👨‍💼 Staff</span>;
+    if (student.is_test) return <span className="badge test">🧪 Test Account</span>;
     if (student.blackholed) return <span className="badge blackhole">⚫ Blackhole</span>;
     if (student.is_piscine) return <span className="badge piscine">🏊 Piscine</span>;
     if (student.sinker) return <span className="badge sinker">⚓ Sinker</span>;
@@ -224,10 +226,6 @@ function Students() {
               <option value="sinker">Sinker</option>
               <option value="freeze">Freeze</option>
               <option value="cheaters">Cheaters</option>
-            </select>
-
-            <select value={grade} onChange={(e) => handleFilterChange(setGrade, e.target.value)} className="filter-select">
-              <option value="all">All Types</option>
               <option value="staff">Staff</option>
               <option value="test">Test Accounts</option>
             </select>

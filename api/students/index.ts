@@ -103,9 +103,8 @@ export default async function handler(
     // Query parametreleri
     const { 
       search, 
-      status, // 'all', 'active', 'blackhole', 'piscine', 'transfer', 'alumni', 'cheaters'
+      status, // 'all', 'active', 'blackhole', 'piscine', 'transfer', 'alumni', 'cheaters', 'staff', 'test'
       campusId, // '49' (Istanbul), '50' (Kocaeli)
-      grade, // 'all', 'staff', 'test'
       sortBy = 'login', // 'login', 'correction_point', 'wallet', 'created_at', 'cheat_count', 'project_count', 'log_time'
       order = 'asc', // 'asc', 'desc'
       limit = '100',
@@ -120,16 +119,6 @@ export default async function handler(
       filter.campusId = parseInt(campusId);
     }
 
-    // Grade filter
-    if (grade && typeof grade === 'string') {
-      if (grade === 'staff') {
-        filter['staff?'] = true;
-      } else if (grade === 'test') {
-        filter.is_test = true;
-      }
-      // 'all' ise filter ekleme
-    }
-
     // Search filter (login, displayname, email)
     if (search && typeof search === 'string') {
       filter.$or = [
@@ -142,6 +131,12 @@ export default async function handler(
     // Status filter
     if (status && typeof status === 'string') {
       switch (status) {
+        case 'staff':
+          filter['staff?'] = true;
+          break;
+        case 'test':
+          filter.is_test = true;
+          break;
         case 'active':
           filter['active?'] = true;
           filter['alumni?'] = { $ne: true };

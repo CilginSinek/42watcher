@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useCache } from '../contexts/CacheContext';
+import { useCache } from '../contexts/useCache';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './Dashboard.css';
@@ -106,12 +106,12 @@ interface DashboardData {
 
 function Dashboard() {
   const { user, logout, token } = useAuth();
-  const { dashboardData, setDashboardData } = useCache();
-  const [data, setData] = useState<DashboardData | null>(dashboardData as DashboardData | null);
-  const [loading, setLoading] = useState(!dashboardData);
+  const { getDashboardCache, setDashboardCache } = useCache();
+  const [campusId, setCampusId] = useState('all');
+  const [data, setData] = useState<DashboardData | null>(getDashboardCache(campusId) as DashboardData | null);
+  const [loading, setLoading] = useState(!getDashboardCache(campusId));
   const [selectedStudent, setSelectedStudent] = useState<StudentFull | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [campusId, setCampusId] = useState('all');
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -127,7 +127,7 @@ function Dashboard() {
         },
       });
       setData(response.data);
-      setDashboardData(response.data);
+      setDashboardCache(campusId, response.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -136,18 +136,15 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    if (token && !dashboardData) {
+    const cachedData = getDashboardCache(campusId);
+    if (cachedData) {
+      setData(cachedData as DashboardData);
+      setLoading(false);
+    } else if (token) {
       fetchDashboardData();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
-
-  useEffect(() => {
-    if (token && dashboardData) {
-      fetchDashboardData();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [campusId]);
+  }, [token, campusId]);
 
   const handleCardClick = (login: string) => {
     if (!data) return;
