@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose from 'mongoose';
+import { Student, Project, Patronage } from '../models/Student';
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -47,70 +48,6 @@ async function connectDB() {
 
   return cached.conn;
 }
-
-// Student Schema
-const studentSchema = new mongoose.Schema({
-  id: { type: Number, required: true, unique: true, index: true },
-  campusId: { type: Number, required: true, index: true },
-  email: String,
-  login: { type: String, required: true, unique: true, index: true },
-  first_name: String,
-  last_name: String,
-  usual_full_name: String,
-  usual_first_name: String,
-  url: String,
-  phone: String,
-  displayname: String,
-  kind: String,
-  image: {
-    link: String,
-    versions: {
-      large: String,
-      medium: String,
-      small: String,
-      micro: String
-    }
-  },
-  "staff?": Boolean,
-  correction_point: Number,
-  pool_month: String,
-  pool_year: String,
-  location: String,
-  wallet: Number,
-  anonymize_date: String,
-  data_erasure_date: String,
-  created_at: Date,
-  updated_at: Date,
-  alumnized_at: Date,
-  "alumni?": Boolean,
-  "active?": Boolean,
-  // Milestone bilgileri
-  blackholed: { type: Boolean, default: null },
-  next_milestone: { type: String, default: null },
-  // Piscine durumu (pool_month/pool_year şu an veya gelecekteyse true)
-  is_piscine: { type: Boolean, default: false },
-  // Transfer öğrenci durumu (alumni olursa false)
-  is_trans: { type: Boolean, default: false },
-  // Freeze durumu (inactive + agu var)
-  freeze: { type: Boolean, default: null },
-  // Sinker durumu (inactive + agu yok)
-  sinker: { type: Boolean, default: null }
-}, { timestamps: true });
-
-const Student = mongoose.models.Student || mongoose.model("Student", studentSchema);
-
-// Cheater Schema
-const cheaterSchema = new mongoose.Schema({
-  campusId: { type: Number, required: true, index: true },
-  login: { type: String, required: true, index: true },
-  project: { type: String, required: true },
-  score: { type: Number, required: true },
-  date: { type: String, required: true }
-}, { timestamps: true });
-
-cheaterSchema.index({ login: 1, project: 1, date: 1 }, { unique: true });
-
-const Cheater = mongoose.models.Cheater || mongoose.model("Cheater", cheaterSchema);
 
 export default async function handler(
   req: VercelRequest,
@@ -219,8 +156,8 @@ export default async function handler(
           filter.freeze = true;
           break;
         case 'cheaters': {
-          // Cheaters filter: Get distinct logins from Cheater collection
-          const cheaterLogins = await Cheater.distinct('login');
+          // Cheaters filter: Students with projects having score -42
+          const cheaterLogins = await Project.distinct('login', { score: -42 });
           filter.login = { $in: cheaterLogins };
           break;
         }
@@ -252,42 +189,62 @@ export default async function handler(
       Student.countDocuments(filter)
     ]);
 
-    // Fetch cheats for all students in one query
+    // Fetch projects for all students in one query
     const studentLogins = students.map((s: Record<string, unknown>) => s.login as string);
-    const cheats = await Cheater.find({ login: { $in: studentLogins } })
+    const projects = await Project.find({ login: { $in: studentLogins } })
       .select('-__v')
       .lean();
 
-    // Group cheats by login
-    const cheatsByLogin = cheats.reduce((acc: Record<string, Record<string, unknown>[]>, cheat: Record<string, unknown>) => {
-      const login = cheat.login as string;
+    // Fetch patronage data for all students
+    const patronages = await Patronage.find({ login: { $in: studentLogins } })
+      .select('-__v')
+      .lean();
+
+    // Group projects by login
+    const projectsByLogin = projects.reduce((acc: Record<string, Record<string, unknown>[]>, project: Record<string, unknown>) => {
+      const login = project.login as string;
       if (!acc[login]) {
         acc[login] = [];
       }
-      acc[login].push(cheat);
+      acc[login].push(project);
       return acc;
     }, {});
 
-    // Add cheats to each student
-    let studentsWithCheats = students.map((student: Record<string, unknown>) => ({
-      ...student,
-      cheats: cheatsByLogin[student.login as string] || [],
-      cheat_count: (cheatsByLogin[student.login as string] || []).length
-    }));
+    // Group patronages by login
+    const patronageByLogin = patronages.reduce((acc: Record<string, Record<string, unknown>>, patronage: Record<string, unknown>) => {
+      const login = patronage.login as string;
+      acc[login] = patronage;
+      return acc;
+    }, {});
+
+    // Add projects and patronage to each student
+    let studentsWithData = students.map((student: Record<string, unknown>) => {
+      const studentProjects = projectsByLogin[student.login as string] || [];
+      const hasCheats = studentProjects.some((p: Record<string, unknown>) => p.score === -42);
+      
+      return {
+        ...student,
+        projects: studentProjects,
+        project_count: studentProjects.length,
+        has_cheats: hasCheats,
+        cheat_count: studentProjects.filter((p: Record<string, unknown>) => p.score === -42).length,
+        patronage: patronageByLogin[student.login as string] || null
+      };
+    });
 
     // Sort by cheat count if needed
     if (isCheatCountSort) {
-      studentsWithCheats.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+      studentsWithData.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
         const aCount = a.cheat_count as number;
         const bCount = b.cheat_count as number;
         return sortOrder === 1 ? aCount - bCount : bCount - aCount;
       });
       // Apply pagination after sorting
-      studentsWithCheats = studentsWithCheats.slice(skip, skip + limitNum);
+      studentsWithData = studentsWithData.slice(skip, skip + limitNum);
     }
 
     return res.status(200).json({
-      students: studentsWithCheats,
+      students: studentsWithData,
       pagination: {
         total,
         page: pageNum,
