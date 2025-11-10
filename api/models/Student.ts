@@ -26,7 +26,6 @@ const studentSchema = new mongoose.Schema({
   correction_point: Number,
   pool_month: String,
   pool_year: String,
-  location: String,
   wallet: Number,
   anonymize_date: String,
   data_erasure_date: String,
@@ -45,10 +44,18 @@ const studentSchema = new mongoose.Schema({
   // Freeze durumu (inactive + agu var)
   freeze: { type: Boolean, default: null },
   // Sinker durumu (inactive + agu yok)
-  sinker: { type: Boolean, default: null }
+  sinker: { type: Boolean, default: null },
+  // Grade bilgisi (HTML'den alınır)
+  grade: { 
+    type: String, 
+    enum: ['Cadet', 'Pisciner', 'Transcender', 'Alumni', 'Staff'],
+    default: null 
+  },
+  // Test account durumu (HTML'den alınır)
+  is_test: { type: Boolean, default: false }
 }, { timestamps: true });
 
-const cheaterSchema = new mongoose.Schema({
+const projectSchema = new mongoose.Schema({
   campusId: { type: Number, required: true, index: true },
   login: { type: String, required: true, index: true },
   project: { type: String, required: true },
@@ -56,7 +63,47 @@ const cheaterSchema = new mongoose.Schema({
   date: { type: String, required: true }
 }, { timestamps: true });
 
-cheaterSchema.index({ login: 1, project: 1, date: 1 }, { unique: true });
+// Composite index for projects - aynı kişi aynı projede tekrar çekmesin
+projectSchema.index({ login: 1, project: 1, date: 1 }, { unique: true });
+
+// Location Stats Schema - Son 3 ayın lokasyon verileri (tek kayıt per öğrenci)
+const locationStatsSchema = new mongoose.Schema({
+  login: { type: String, required: true, unique: true, index: true },
+  campusId: { type: Number, required: true, index: true },
+  // Her ay için toplam süre ve günlük detaylar
+  months: {
+    type: Map,
+    of: {
+      totalDuration: String, // "HH:MM:SS" formatında aylık toplam
+      days: {
+        type: Map,
+        of: String // Gün -> "HH:MM:SS" formatında süre
+      }
+    },
+    default: {}
+  },
+  lastUpdated: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+// Patronage Schema - Godfathers (patroned by) ve Children (patroning)
+const patronageSchema = new mongoose.Schema({
+  login: { type: String, required: true, unique: true, index: true },
+  campusId: { type: Number, required: true, index: true },
+  // Godfathers (patroned by) - Bu kişinin mentorları
+  godfathers: [{
+    login: { type: String, required: true }
+  }],
+  // Children (patroning) - Bu kişinin mentee'leri
+  children: [{
+    login: { type: String, required: true }
+  }],
+  lastUpdated: { type: Date, default: Date.now }
+}, { timestamps: true });
 
 export const Student = mongoose.models.Student || mongoose.model("Student", studentSchema);
-export const Cheater = mongoose.models.Cheater || mongoose.model("Cheater", cheaterSchema);
+export const Project = mongoose.models.Project || mongoose.model("Project", projectSchema);
+export const LocationStats = mongoose.models.LocationStats || mongoose.model("LocationStats", locationStatsSchema);
+export const Patronage = mongoose.models.Patronage || mongoose.model("Patronage", patronageSchema);
+
+// Backward compatibility - Cheater is now Project with score -42
+export const Cheater = Project;

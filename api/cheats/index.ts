@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose from 'mongoose';
+import { Project } from '../models/Student';
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -47,19 +48,6 @@ async function connectDB() {
 
   return cached.conn;
 }
-
-// Cheater Schema
-const cheaterSchema = new mongoose.Schema({
-  campusId: { type: Number, required: true, index: true },
-  login: { type: String, required: true, index: true },
-  project: { type: String, required: true },
-  score: { type: Number, required: true },
-  date: { type: String, required: true }
-}, { timestamps: true });
-
-cheaterSchema.index({ login: 1, project: 1, date: 1 }, { unique: true });
-
-const Cheater = mongoose.models.Cheater || mongoose.model("Cheater", cheaterSchema);
 
 export default async function handler(
   req: VercelRequest,
@@ -118,15 +106,22 @@ export default async function handler(
       return res.status(400).json({ error: 'Login parameter is required' });
     }
 
-    // Fetch cheats for this student
-    const cheats = await Cheater.find({ login })
+    // Fetch all projects for this student
+    const projects = await Project.find({ login })
       .sort({ date: -1 })
       .select('-_id -__v -campusId -createdAt -updatedAt')
       .lean();
 
+    // Separate cheats (score -42) and regular projects
+    const cheats = projects.filter((p: Record<string, unknown>) => p.score === -42);
+    const regularProjects = projects.filter((p: Record<string, unknown>) => p.score !== -42);
+
     return res.status(200).json({
       login,
-      cheats
+      projects: regularProjects,
+      cheats,
+      totalProjects: projects.length,
+      cheatCount: cheats.length
     });
   } catch (error) {
     console.error('Error fetching cheats:', error);
