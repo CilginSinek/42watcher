@@ -181,9 +181,10 @@ export default async function handler(
     const isLogTimeSort = sortBy === 'log_time';
     const isGodfatherCountSort = sortBy === 'godfather_count';
     const isChildrenCountSort = sortBy === 'children_count';
-    const needsCustomSort = isCheatCountSort || isProjectCountSort || isLogTimeSort || isGodfatherCountSort || isChildrenCountSort;
+    const needsMemorySort = isCheatCountSort || isProjectCountSort || isLogTimeSort;
+    const needsAggregationSort = isGodfatherCountSort || isChildrenCountSort;
     
-    if (typeof sortBy === 'string' && !needsCustomSort) {
+    if (typeof sortBy === 'string' && !needsMemorySort && !needsAggregationSort) {
       sort[sortBy] = sortOrder as 1 | -1;
     }
 
@@ -192,16 +193,71 @@ export default async function handler(
     const pageNum = parseInt(page as string) || 1;
     const skip = (pageNum - 1) * limitNum;
 
-    // Fetch students (without pagination if custom sorting)
-    const [students, total] = await Promise.all([
-      Student.find(filter)
-        .sort(needsCustomSort ? {} : sort)
-        .limit(needsCustomSort ? 0 : limitNum)
-        .skip(needsCustomSort ? 0 : skip)
-        .select('-__v')
-        .lean(),
-      Student.countDocuments(filter)
-    ]);
+    let students: Record<string, unknown>[] = [];
+    let total = 0;
+
+    // Godfather/Children count için aggregation kullan (DB'de sıralama)
+    if (needsAggregationSort) {
+      const sortField = isGodfatherCountSort ? 'godfatherCount' : 'childrenCount';
+      
+      const pipeline = [
+        { $match: filter },
+        {
+          $lookup: {
+            from: 'patronages',
+            localField: 'login',
+            foreignField: 'login',
+            as: 'patronageData'
+          }
+        },
+        {
+          $addFields: {
+            godfatherCount: {
+              $size: {
+                $ifNull: [
+                  { $arrayElemAt: ['$patronageData.godfathers', 0] },
+                  []
+                ]
+              }
+            },
+            childrenCount: {
+              $size: {
+                $ifNull: [
+                  { $arrayElemAt: ['$patronageData.children', 0] },
+                  []
+                ]
+              }
+            }
+          }
+        },
+        { $sort: { [sortField]: sortOrder as 1 | -1 } },
+        {
+          $facet: {
+            metadata: [{ $count: 'total' }],
+            data: [{ $skip: skip }, { $limit: limitNum }]
+          }
+        }
+      ] as const;
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = await Student.aggregate(pipeline as any);
+      students = result[0].data;
+      total = result[0].metadata[0]?.total || 0;
+    }
+    // Diğer custom sortlar için eski yöntemi kullan (memory'de sıralama)
+    else {
+      const [fetchedStudents, count] = await Promise.all([
+        Student.find(filter)
+          .sort(needsMemorySort ? {} : sort)
+          .limit(needsMemorySort ? 0 : limitNum)
+          .skip(needsMemorySort ? 0 : skip)
+          .select('-__v')
+          .lean(),
+        Student.countDocuments(filter)
+      ]);
+      students = fetchedStudents;
+      total = count;
+    }
 
     // Fetch projects for all students in one query
     const studentLogins = students.map((s: Record<string, unknown>) => s.login as string);
@@ -277,14 +333,19 @@ export default async function handler(
         has_cheats: hasCheats,
         cheat_count: cheats.length,
         patronage: patronage || null,
-        godfather_count: patronage?.godfathers ? (patronage.godfathers as unknown[]).length : 0,
-        children_count: patronage?.children ? (patronage.children as unknown[]).length : 0,
+        // Aggregation'dan geliyorsa zaten var, yoksa hesapla
+        godfather_count: student.godfatherCount !== undefined 
+          ? student.godfatherCount 
+          : (patronage?.godfathers ? (patronage.godfathers as unknown[]).length : 0),
+        children_count: student.childrenCount !== undefined 
+          ? student.childrenCount 
+          : (patronage?.children ? (patronage.children as unknown[]).length : 0),
         log_time: locationData ? locationData.totalDuration : 0
       };
     });
 
-    // Sort by custom fields if needed
-    if (needsCustomSort) {
+    // Sort by custom fields if needed (sadece memory sort için)
+    if (needsMemorySort) {
       studentsWithData.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
         let aValue, bValue;
         
@@ -297,12 +358,6 @@ export default async function handler(
         } else if (isLogTimeSort) {
           aValue = a.log_time as number;
           bValue = b.log_time as number;
-        } else if (isGodfatherCountSort) {
-          aValue = a.godfather_count as number;
-          bValue = b.godfather_count as number;
-        } else if (isChildrenCountSort) {
-          aValue = a.children_count as number;
-          bValue = b.children_count as number;
         } else {
           return 0;
         }
