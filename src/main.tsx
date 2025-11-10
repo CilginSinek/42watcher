@@ -4,12 +4,15 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext'
+import { CacheProvider } from './contexts/CacheContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <CacheProvider>
+          <App />
+        </CacheProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

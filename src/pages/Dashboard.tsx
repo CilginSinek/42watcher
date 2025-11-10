@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useCache } from '../contexts/CacheContext';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './Dashboard.css';
@@ -83,6 +84,12 @@ interface AllTimePoint {
   student: Student | null;
 }
 
+interface AllTimeLevel {
+  login: string;
+  level: number;
+  student: Student | null;
+}
+
 interface DashboardData {
   currentMonth: string;
   topProjectSubmitters: TopSubmitter[];
@@ -90,12 +97,14 @@ interface DashboardData {
   allTimeProjects: AllTimeProject[];
   allTimeWallet: AllTimeWallet[];
   allTimePoints: AllTimePoint[];
+  allTimeLevels: AllTimeLevel[];
 }
 
 function Dashboard() {
   const { user, logout, token } = useAuth();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { dashboardData, setDashboardData } = useCache();
+  const [data, setData] = useState<DashboardData | null>(dashboardData as DashboardData | null);
+  const [loading, setLoading] = useState(!dashboardData);
   const [selectedStudent, setSelectedStudent] = useState<StudentFull | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [loadingStudent, setLoadingStudent] = useState(false);
@@ -109,6 +118,7 @@ function Dashboard() {
         },
       });
       setData(response.data);
+      setDashboardData(response.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -352,6 +362,35 @@ function Dashboard() {
                         <h4>{ranking.student?.displayname || ranking.login}</h4>
                         <div className="student-stats">
                           <span className="stat-item">🎯 {ranking.correctionPoint} points</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* All Time Levels */}
+              <section className="stats-section">
+                <h3 className="section-title">🎓 Highest Levels</h3>
+                <div className="top-list">
+                  {data.allTimeLevels?.map((ranking, index) => (
+                    <div 
+                      key={ranking.login} 
+                      className={`top-card rank-${index + 1}`}
+                      onClick={() => handleCardClick(ranking.login)}
+                    >
+                      <div className="rank-badge">{index + 1}</div>
+                      {ranking.student && (
+                        <img 
+                          src={ranking.student.image.link} 
+                          alt={ranking.student.login}
+                          className="student-avatar"
+                        />
+                      )}
+                      <div className="student-details">
+                        <h4>{ranking.student?.displayname || ranking.login}</h4>
+                        <div className="student-stats">
+                          <span className="stat-item">🎓 Level {ranking.level?.toFixed(2)}</span>
                         </div>
                       </div>
                     </div>

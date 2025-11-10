@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useCache } from '../contexts/CacheContext';
 import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import './Students.css';
@@ -58,9 +59,12 @@ interface PaginationInfo {
 
 function Students() {
   const { user, logout, token } = useAuth();
+  const { studentsData, setStudentsData } = useCache();
   const [searchParams] = useSearchParams();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [students, setStudents] = useState<Student[]>(
+    studentsData ? (studentsData as { students: Student[] }).students : []
+  );
+  const [loading, setLoading] = useState(!studentsData);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [status, setStatus] = useState('all');
   const [campusId, setCampusId] = useState('all');
@@ -68,12 +72,11 @@ function Students() {
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [pagination, setPagination] = useState<PaginationInfo>({
-    total: 0,
-    page: 1,
-    limit: 50,
-    totalPages: 0
-  });
+  const [pagination, setPagination] = useState<PaginationInfo>(
+    studentsData 
+      ? (studentsData as { pagination: PaginationInfo }).pagination 
+      : { total: 0, page: 1, limit: 50, totalPages: 0 }
+  );
 
   // Debounce için
   const debounceTimeout = useRef<number | null>(null);
@@ -98,6 +101,7 @@ function Students() {
       });
       setStudents(response.data.students);
       setPagination(response.data.pagination);
+      setStudentsData(response.data);
     } catch (error) {
       console.error('Error fetching students:', error);
     } finally {

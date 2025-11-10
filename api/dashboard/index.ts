@@ -324,13 +324,27 @@ export default async function handler(
       student: student
     }));
 
+    // Tüm zamanlar en yüksek level
+    const allTimeLevels = await Student.find({ level: { $exists: true, $ne: null } })
+      .select('login displayname image correction_point wallet grade level')
+      .sort({ level: -1 })
+      .limit(5)
+      .lean();
+
+    const allTimeLevelsFormatted = allTimeLevels.map((student: Record<string, unknown>) => ({
+      login: student.login,
+      level: student.level,
+      student: student
+    }));
+
     return res.status(200).json({
       currentMonth,
       topProjectSubmitters: topSubmitters,
       topLocationStats: topLocations,
       allTimeProjects: allTimeProjectsWithStudents,
       allTimeWallet: allTimeWalletFormatted,
-      allTimePoints: allTimePointsFormatted
+      allTimePoints: allTimePointsFormatted,
+      allTimeLevels: allTimeLevelsFormatted
     });
 
   } catch (error) {
