@@ -348,7 +348,22 @@ export default async function handler(
               {
                 $cond: {
                   if: { $gt: [{ $size: '$feedbackData' }, 0] },
-                  then: { $avg: '$feedbackData.rating' },
+                  then: {
+                    $avg: {
+                      $map: {
+                        input: '$feedbackData',
+                        as: 'fb',
+                        in: {
+                          $toDouble: {
+                            $arrayElemAt: [
+                              { $split: ['$$fb.rating', ' / '] },
+                              0
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
                   else: 0
                 }
               },
@@ -362,7 +377,27 @@ export default async function handler(
                   if: { $gt: [{ $size: '$feedbackData' }, 0] },
                   then: {
                     $add: [
-                      { $multiply: [{ $avg: '$feedbackData.rating' }, 10] },
+                      {
+                        $multiply: [
+                          {
+                            $avg: {
+                              $map: {
+                                input: '$feedbackData',
+                                as: 'fb',
+                                in: {
+                                  $toDouble: {
+                                    $arrayElemAt: [
+                                      { $split: ['$$fb.rating', ' / '] },
+                                      0
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          10
+                        ]
+                      },
                       { $size: '$feedbackData' }
                     ]
                   },
@@ -542,7 +577,14 @@ export default async function handler(
                       $map: {
                         input: '$feedbackData',
                         as: 'fb',
-                        in: '$$fb.rating'
+                        in: {
+                          $toDouble: {
+                            $arrayElemAt: [
+                              { $split: ['$$fb.rating', ' / '] },
+                              0
+                            ]
+                          }
+                        }
                       }
                     }
                   },
@@ -563,7 +605,14 @@ export default async function handler(
                         $map: {
                           input: '$feedbackData',
                           as: 'fb',
-                          in: '$$fb.ratingDetails.nice'
+                          in: {
+                            $toDouble: {
+                              $arrayElemAt: [
+                                { $split: ['$$fb.ratingDetails.nice', ' / '] },
+                                0
+                              ]
+                            }
+                          }
                         }
                       }
                     },
@@ -577,7 +626,14 @@ export default async function handler(
                         $map: {
                           input: '$feedbackData',
                           as: 'fb',
-                          in: '$$fb.ratingDetails.rigorous'
+                          in: {
+                            $toDouble: {
+                              $arrayElemAt: [
+                                { $split: ['$$fb.ratingDetails.rigorous', ' / '] },
+                                0
+                              ]
+                            }
+                          }
                         }
                       }
                     },
@@ -591,7 +647,14 @@ export default async function handler(
                         $map: {
                           input: '$feedbackData',
                           as: 'fb',
-                          in: '$$fb.ratingDetails.interested'
+                          in: {
+                            $toDouble: {
+                              $arrayElemAt: [
+                                { $split: ['$$fb.ratingDetails.interested', ' / '] },
+                                0
+                              ]
+                            }
+                          }
                         }
                       }
                     },
@@ -605,7 +668,14 @@ export default async function handler(
                         $map: {
                           input: '$feedbackData',
                           as: 'fb',
-                          in: '$$fb.ratingDetails.punctuality'
+                          in: {
+                            $toDouble: {
+                              $arrayElemAt: [
+                                { $split: ['$$fb.ratingDetails.punctuality', ' / '] },
+                                0
+                              ]
+                            }
+                          }
                         }
                       }
                     },
@@ -630,7 +700,14 @@ export default async function handler(
                               $map: {
                                 input: '$feedbackData',
                                 as: 'fb',
-                                in: '$$fb.rating'
+                                in: {
+                                  $toDouble: {
+                                    $arrayElemAt: [
+                                      { $split: ['$$fb.rating', ' / '] },
+                                      0
+                                    ]
+                                  }
+                                }
                               }
                             }
                           },
