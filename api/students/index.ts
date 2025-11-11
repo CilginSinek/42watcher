@@ -123,6 +123,11 @@ export default async function handler(
   try {
     await connectDB();
 
+    // small helper to safely escape user input used in regex
+    const escapeRegex = (str: string) => {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    };
+
     // Query parametreleri
     const { 
       search, 
@@ -142,12 +147,14 @@ export default async function handler(
       matchFilter.campusId = parseInt(campusId);
     }
 
-    // Search filter
+    // Search filter (escape user input to prevent regex injection / ReDoS)
     if (search && typeof search === 'string') {
+      const escaped = escapeRegex(search);
+      const safeRegex = new RegExp(escaped, 'i');
       matchFilter.$or = [
-        { login: { $regex: search, $options: 'i' } },
-        { displayname: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
+        { login: safeRegex },
+        { displayname: safeRegex },
+        { email: safeRegex }
       ];
     }
 
@@ -213,7 +220,8 @@ export default async function handler(
       'avg_rating': 'avgRating'
     };
 
-    const actualSortField = sortFieldMap[sortBy as string] || sortBy;
+  // Only allow known sort fields; fallback to 'login' for safety
+  const actualSortField = sortFieldMap[sortBy as string] ?? 'login';
 
     // TWO-PHASE AGGREGATION APPROACH FOR FREE-TIER MONGODB
     // Phase 1: Lightweight pipeline to get sorted logins only

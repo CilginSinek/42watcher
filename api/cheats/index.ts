@@ -106,8 +106,14 @@ export default async function handler(
       return res.status(400).json({ error: 'Login parameter is required' });
     }
 
+    // Basic validation: allow only reasonable login characters to avoid injection
+    const safeLogin = /^[a-z0-9._-]{1,50}$/i.test(login) ? login : null;
+    if (!safeLogin) {
+      return res.status(400).json({ error: 'Invalid login parameter' });
+    }
+
     // Fetch all projects for this student
-    const projects = await Project.find({ login })
+    const projects = await Project.find({ login: safeLogin })
       .sort({ date: -1 })
       .select('-_id -__v -campusId -createdAt -updatedAt')
       .lean();
