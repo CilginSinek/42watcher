@@ -215,112 +215,91 @@ export default async function handler(
 
     const actualSortField = sortFieldMap[sortBy as string] || sortBy;
 
-    // OPTIMIZED AGGREGATION PIPELINE - Tüm işlemler MongoDB'de
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pipeline: any[] = [
-      // 1. İlk filtreleme
-      { $match: matchFilter },
+    // TWO-PHASE AGGREGATION APPROACH FOR FREE-TIER MONGODB
+    // Phase 1: Lightweight pipeline to get sorted logins only
+    // Phase 2: Detailed data fetch for selected logins only
+    
+    // Get total count first (without heavy lookups)
+    const total = await Student.countDocuments(matchFilter);
 
-      // 2. Projects lookup ve hesaplama
-      {
+    // PHASE 1: Lightweight aggregation for sorting and pagination
+    // Only calculate fields needed for sorting, keep documents small
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const smallPipeline: any[] = [
+      { $match: matchFilter }
+    ];
+
+    // Add only the necessary lookup for the sort field
+    if (actualSortField === 'projectCount' || actualSortField === 'cheatCount') {
+      smallPipeline.push({
         $lookup: {
           from: 'projects',
-          localField: 'login',
-          foreignField: 'login',
-          as: 'projectsData'
-        }
-      },
-      {
-        $addFields: {
-          // Success project count
-          projectCount: {
-            $size: {
-              $filter: {
-                input: '$projectsData',
-                as: 'proj',
-                cond: { $eq: ['$$proj.status', 'success'] }
-              }
-            }
-          },
-          // Cheat count
-          cheatCount: {
-            $size: {
-              $filter: {
-                input: '$projectsData',
-                as: 'proj',
-                cond: {
-                  $and: [
-                    { $eq: ['$$proj.status', 'fail'] },
-                    { $eq: ['$$proj.score', -42] }
-                  ]
-                }
-              }
-            }
-          },
-          // Has cheats flag
-          has_cheats: {
-            $gt: [
-              {
-                $size: {
-                  $filter: {
-                    input: '$projectsData',
-                    as: 'proj',
-                    cond: {
-                      $and: [
-                        { $eq: ['$$proj.status', 'fail'] },
-                        { $eq: ['$$proj.score', -42] }
-                      ]
-                    }
+          let: { login: '$login' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$login', '$$login'] } } },
+            {
+              $group: {
+                _id: null,
+                projectCount: {
+                  $sum: { $cond: [{ $eq: ['$status', 'success'] }, 1, 0] }
+                },
+                cheatCount: {
+                  $sum: {
+                    $cond: [
+                      { $and: [{ $eq: ['$status', 'fail'] }, { $eq: ['$score', -42] }] },
+                      1,
+                      0
+                    ]
                   }
                 }
-              },
-              0
-            ]
-          }
+              }
+            }
+          ],
+          as: 'projectStats'
         }
-      },
-
-      // 3. Patronage lookup
-      {
+      });
+      smallPipeline.push({
+        $addFields: {
+          projectCount: { $ifNull: [{ $arrayElemAt: ['$projectStats.projectCount', 0] }, 0] },
+          cheatCount: { $ifNull: [{ $arrayElemAt: ['$projectStats.cheatCount', 0] }, 0] }
+        }
+      });
+    } else if (actualSortField === 'godfatherCount' || actualSortField === 'childrenCount') {
+      smallPipeline.push({
         $lookup: {
           from: 'patronages',
-          localField: 'login',
-          foreignField: 'login',
-          as: 'patronageData'
+          let: { login: '$login' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$login', '$$login'] } } },
+            {
+              $project: {
+                godfatherCount: { $size: { $ifNull: ['$godfathers', []] } },
+                childrenCount: { $size: { $ifNull: ['$children', []] } }
+              }
+            }
+          ],
+          as: 'patronageStats'
         }
-      },
-      {
+      });
+      smallPipeline.push({
         $addFields: {
-          patronage: { $arrayElemAt: ['$patronageData', 0] },
-          godfatherCount: {
-            $size: {
-              $ifNull: [
-                { $arrayElemAt: ['$patronageData.godfathers', 0] },
-                []
-              ]
-            }
-          },
-          childrenCount: {
-            $size: {
-              $ifNull: [
-                { $arrayElemAt: ['$patronageData.children', 0] },
-                []
-              ]
-            }
-          }
+          godfatherCount: { $ifNull: [{ $arrayElemAt: ['$patronageStats.godfatherCount', 0] }, 0] },
+          childrenCount: { $ifNull: [{ $arrayElemAt: ['$patronageStats.childrenCount', 0] }, 0] }
         }
-      },
-
-      // 4. LocationStats lookup ve duration hesaplama
-      {
+      });
+    } else if (actualSortField === 'logTime') {
+      smallPipeline.push({
         $lookup: {
           from: 'locationstats',
-          localField: 'login',
-          foreignField: 'login',
+          let: { login: '$login' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$login', '$$login'] } } },
+            { $project: { months: 1 } }
+          ],
           as: 'locationData'
         }
-      },
-      {
+      });
+      smallPipeline.push({
         $addFields: {
           logTime: {
             $reduce: {
@@ -348,22 +327,22 @@ export default async function handler(
             }
           }
         }
-      },
-
-      // 5. Feedback lookup ve evaluation metrics hesaplama
-      {
+      });
+    } else if (actualSortField === 'evoPerformance' || actualSortField === 'feedbackCount' || actualSortField === 'avgRating') {
+      smallPipeline.push({
         $lookup: {
           from: 'feedbacks',
-          localField: 'login',
-          foreignField: 'login',
+          let: { login: '$login' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$login', '$$login'] } } },
+            { $project: { rating: 1 } }
+          ],
           as: 'feedbackData'
         }
-      },
-      {
+      });
+      smallPipeline.push({
         $addFields: {
-          // Feedback count
           feedbackCount: { $size: '$feedbackData' },
-          // Average rating
           avgRating: {
             $cond: {
               if: { $gt: [{ $size: '$feedbackData' }, 0] },
@@ -371,7 +350,185 @@ export default async function handler(
               else: 0
             }
           },
-          // Average rating details
+          evoPerformance: {
+            $cond: {
+              if: { $gt: [{ $size: '$feedbackData' }, 0] },
+              then: {
+                $add: [
+                  { $multiply: [{ $avg: '$feedbackData.rating' }, 10] },
+                  { $size: '$feedbackData' }
+                ]
+              },
+              else: 0
+            }
+          }
+        }
+      });
+    }
+
+    // Sort and paginate on small documents
+    const sortStage: Record<string, 1 | -1> = {};
+    sortStage[actualSortField as string] = sortOrder as 1 | -1;
+    smallPipeline.push({ $sort: sortStage });
+    smallPipeline.push({ $skip: skip });
+    smallPipeline.push({ $limit: limitNum });
+    smallPipeline.push({ $project: { login: 1, _id: 0 } });
+
+    const sortedLogins = await Student.aggregate(smallPipeline);
+    const loginList = sortedLogins.map((doc, index) => ({ login: doc.login, orderIndex: index }));
+
+    if (loginList.length === 0) {
+      return res.status(200).json({
+        students: [],
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum)
+        }
+      });
+    }
+
+    // PHASE 2: Detailed data fetch for selected logins only
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const detailPipeline: any[] = [
+      { $match: { login: { $in: loginList.map(l => l.login) } } },
+
+      // Projects lookup with limited pipeline
+      {
+        $lookup: {
+          from: 'projects',
+          let: { login: '$login' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$login', '$$login'] } } },
+            { $sort: { date: -1 } },
+            { $limit: 10 },
+            { $project: { project: 1, score: 1, status: 1, date: 1, _id: 0 } }
+          ],
+          as: 'projects'
+        }
+      },
+
+      // Project stats lookup
+      {
+        $lookup: {
+          from: 'projects',
+          let: { login: '$login' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$login', '$$login'] } } },
+            {
+              $group: {
+                _id: null,
+                projectCount: {
+                  $sum: { $cond: [{ $eq: ['$status', 'success'] }, 1, 0] }
+                },
+                cheatCount: {
+                  $sum: {
+                    $cond: [
+                      { $and: [{ $eq: ['$status', 'fail'] }, { $eq: ['$score', -42] }] },
+                      1,
+                      0
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          as: 'projectStats'
+        }
+      },
+
+      // Patronage lookup
+      {
+        $lookup: {
+          from: 'patronages',
+          let: { login: '$login' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$login', '$$login'] } } },
+            {
+              $project: {
+                godfathers: 1,
+                children: 1,
+                godfatherCount: { $size: { $ifNull: ['$godfathers', []] } },
+                childrenCount: { $size: { $ifNull: ['$children', []] } }
+              }
+            }
+          ],
+          as: 'patronageData'
+        }
+      },
+
+      // LocationStats lookup
+      {
+        $lookup: {
+          from: 'locationstats',
+          let: { login: '$login' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$login', '$$login'] } } },
+            { $project: { months: 1 } }
+          ],
+          as: 'locationData'
+        }
+      },
+
+      // Feedback lookup with limited fields
+      {
+        $lookup: {
+          from: 'feedbacks',
+          let: { login: '$login' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$login', '$$login'] } } },
+            { $project: { rating: 1, ratingDetails: 1 } }
+          ],
+          as: 'feedbackData'
+        }
+      },
+
+      // Calculate all fields
+      {
+        $addFields: {
+          project_count: { $ifNull: [{ $arrayElemAt: ['$projectStats.projectCount', 0] }, 0] },
+          cheat_count: { $ifNull: [{ $arrayElemAt: ['$projectStats.cheatCount', 0] }, 0] },
+          has_cheats: { $gt: [{ $ifNull: [{ $arrayElemAt: ['$projectStats.cheatCount', 0] }, 0] }, 0] },
+          
+          patronage: { $arrayElemAt: ['$patronageData', 0] },
+          godfather_count: { $ifNull: [{ $arrayElemAt: ['$patronageData.godfatherCount', 0] }, 0] },
+          children_count: { $ifNull: [{ $arrayElemAt: ['$patronageData.childrenCount', 0] }, 0] },
+          
+          logTime: {
+            $reduce: {
+              input: { $objectToArray: { $ifNull: [{ $arrayElemAt: ['$locationData.months', 0] }, {}] } },
+              initialValue: 0,
+              in: {
+                $add: [
+                  '$$value',
+                  {
+                    $let: {
+                      vars: {
+                        timeParts: { $split: [{ $ifNull: ['$$this.v.totalDuration', '00:00:00'] }, ':'] }
+                      },
+                      in: {
+                        $add: [
+                          { $multiply: [{ $toInt: { $arrayElemAt: ['$$timeParts', 0] } }, 3600] },
+                          { $multiply: [{ $toInt: { $arrayElemAt: ['$$timeParts', 1] } }, 60] },
+                          { $toInt: { $arrayElemAt: ['$$timeParts', 2] } }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          
+          feedbackCount: { $size: '$feedbackData' },
+          avgRating: {
+            $cond: {
+              if: { $gt: [{ $size: '$feedbackData' }, 0] },
+              then: { $avg: '$feedbackData.rating' },
+              else: 0
+            }
+          },
           avgRatingDetails: {
             nice: {
               $cond: {
@@ -402,14 +559,13 @@ export default async function handler(
               }
             }
           },
-          // Evo performance score (weighted: feedback count + average rating)
           evoPerformance: {
             $cond: {
               if: { $gt: [{ $size: '$feedbackData' }, 0] },
               then: {
                 $add: [
-                  { $multiply: [{ $avg: '$feedbackData.rating' }, 10] }, // Rating weight
-                  { $size: '$feedbackData' } // Feedback count
+                  { $multiply: [{ $avg: '$feedbackData.rating' }, 10] },
+                  { $size: '$feedbackData' }
                 ]
               },
               else: 0
@@ -418,37 +574,11 @@ export default async function handler(
         }
       },
 
-      // 6. Son 10 projeyi ekle ve gereksiz alanları kaldır
-      {
-        $addFields: {
-          projects: {
-            $slice: [
-              {
-                $sortArray: {
-                  input: {
-                    $map: {
-                      input: '$projectsData',
-                      as: 'proj',
-                      in: {
-                        project: '$$proj.project',
-                        score: '$$proj.score',
-                        status: '$$proj.status',
-                        date: '$$proj.date'
-                      }
-                    }
-                  },
-                  sortBy: { date: -1 }
-                }
-              },
-              10
-            ]
-          }
-        }
-      },
+      // Clean up temporary fields
       {
         $project: {
           __v: 0,
-          projectsData: 0,
+          projectStats: 0,
           patronageData: 0,
           locationData: 0,
           feedbackData: 0
@@ -456,26 +586,15 @@ export default async function handler(
       }
     ];
 
-    // 7. Sıralama ekle
-    const sortStage: Record<string, 1 | -1> = {};
-    sortStage[actualSortField as string] = sortOrder as 1 | -1;
-    pipeline.push({ $sort: sortStage });
+    const students = await Student.aggregate(detailPipeline);
 
-    // 8. Facet ile pagination ve count
-    pipeline.push({
-      $facet: {
-        metadata: [{ $count: 'total' }],
-        students: [
-          { $skip: skip },
-          { $limit: limitNum }
-        ]
-      }
+    // Re-sort according to phase 1 order
+    const loginOrderMap = new Map(loginList.map(l => [l.login, l.orderIndex]));
+    students.sort((a, b) => {
+      const orderA = loginOrderMap.get(a.login) ?? 999999;
+      const orderB = loginOrderMap.get(b.login) ?? 999999;
+      return orderA - orderB;
     });
-
-    const result = await Student.aggregate(pipeline).allowDiskUse(true);
-
-    const students = result[0].students || [];
-    const total = result[0].metadata[0]?.total || 0;
 
     return res.status(200).json({
       students,
