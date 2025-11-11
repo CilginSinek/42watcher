@@ -472,7 +472,7 @@ export default async function handler(
       }
     });
 
-    const result = await Student.aggregate(pipeline, { allowDiskUse: true });
+    const result = await Student.aggregate(pipeline).allowDiskUse(true);
 
     const students = result[0].students || [];
     const total = result[0].metadata[0]?.total || 0;
