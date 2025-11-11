@@ -535,7 +535,20 @@ export default async function handler(
           avgRating: {
             $cond: {
               if: { $gt: [{ $size: '$feedbackData' }, 0] },
-              then: { $ifNull: [{ $avg: '$feedbackData.rating' }, 0] },
+              then: {
+                $ifNull: [
+                  {
+                    $avg: {
+                      $map: {
+                        input: '$feedbackData',
+                        as: 'fb',
+                        in: '$$fb.rating'
+                      }
+                    }
+                  },
+                  0
+                ]
+              },
               else: '$$REMOVE'
             }
           },
@@ -543,10 +556,62 @@ export default async function handler(
             $cond: {
               if: { $gt: [{ $size: '$feedbackData' }, 0] },
               then: {
-                nice: { $ifNull: [{ $avg: '$feedbackData.ratingDetails.nice' }, 0] },
-                rigorous: { $ifNull: [{ $avg: '$feedbackData.ratingDetails.rigorous' }, 0] },
-                interested: { $ifNull: [{ $avg: '$feedbackData.ratingDetails.interested' }, 0] },
-                punctuality: { $ifNull: [{ $avg: '$feedbackData.ratingDetails.punctuality' }, 0] }
+                nice: {
+                  $ifNull: [
+                    {
+                      $avg: {
+                        $map: {
+                          input: '$feedbackData',
+                          as: 'fb',
+                          in: '$$fb.ratingDetails.nice'
+                        }
+                      }
+                    },
+                    0
+                  ]
+                },
+                rigorous: {
+                  $ifNull: [
+                    {
+                      $avg: {
+                        $map: {
+                          input: '$feedbackData',
+                          as: 'fb',
+                          in: '$$fb.ratingDetails.rigorous'
+                        }
+                      }
+                    },
+                    0
+                  ]
+                },
+                interested: {
+                  $ifNull: [
+                    {
+                      $avg: {
+                        $map: {
+                          input: '$feedbackData',
+                          as: 'fb',
+                          in: '$$fb.ratingDetails.interested'
+                        }
+                      }
+                    },
+                    0
+                  ]
+                },
+                punctuality: {
+                  $ifNull: [
+                    {
+                      $avg: {
+                        $map: {
+                          input: '$feedbackData',
+                          as: 'fb',
+                          in: '$$fb.ratingDetails.punctuality'
+                        }
+                      }
+                    },
+                    0
+                  ]
+                }
               },
               else: '$$REMOVE'
             }
@@ -558,7 +623,20 @@ export default async function handler(
                 $ifNull: [
                   {
                     $add: [
-                      { $multiply: [{ $avg: '$feedbackData.rating' }, 10] },
+                      {
+                        $multiply: [
+                          {
+                            $avg: {
+                              $map: {
+                                input: '$feedbackData',
+                                as: 'fb',
+                                in: '$$fb.rating'
+                              }
+                            }
+                          },
+                          10
+                        ]
+                      },
                       { $size: '$feedbackData' }
                     ]
                   },
