@@ -7,16 +7,6 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { StudentModal } from '../components/StudentModal';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 
-// Mock data loader - only in development
-const loadMockData = async () => {
-  try {
-    const data = await import('../mockData.json');
-    return data.default || data;
-  } catch {
-    return { mockDashboard: null };
-  }
-};
-
 interface Project {
   project: string;
   score: number;
@@ -50,8 +40,6 @@ interface DashboardData {
   allTimeLevels: { login: string; level: number; student: StudentFull | null }[];
   gradeDistribution: { name: string; value: number }[];
 }
-
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 function Dashboard() {
   const { user, logout, token } = useAuth();
@@ -90,17 +78,6 @@ function Dashboard() {
   const COLORS = ['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
   const fetchDashboardData = async () => {
-    if (isLocalhost) {
-      setLoading(true);
-      const mockData = await loadMockData();
-      setTimeout(() => {
-        setData(mockData.mockDashboard as DashboardData);
-        setDashboardCache(campusId, mockData.mockDashboard);
-        setLoading(false);
-      }, 500);
-      return;
-    }
-
     setLoading(true);
     try {
       const params = new URLSearchParams();

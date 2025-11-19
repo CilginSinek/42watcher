@@ -2,16 +2,6 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import axios from 'axios';
 
-// Mock data loader - only in development
-const loadMockData = async () => {
-  try {
-    const data = await import('../mockData.json');
-    return data.default || data;
-  } catch {
-    return { mockUser: null };
-  }
-};
-
 interface User {
   id: number;
   login: string;
@@ -45,25 +35,12 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+export const AuthProvider = ({ children }: AuthProviderProps)  => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Localhost'ta mock user kullan
-    if (isLocalhost) {
-      loadMockData().then(mockData => {
-        setUser(mockData.mockUser as User);
-        setToken('mock-token-for-localhost');
-        setLoading(false);
-      });
-      return;
-    }
-
-    // Production'da normal akış
     const storedToken = localStorage.getItem('42_access_token');
     if (storedToken) {
       setToken(storedToken);
@@ -74,15 +51,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const fetchUserData = async (token: string) => {
-    // Localhost'ta API çağrısı yapma
-    if (isLocalhost) {
-      const mockData = await loadMockData();
-      setUser(mockData.mockUser as User);
-      setLoading(false);
-      return;
-    }
-
-    // Production'da API çağrısı
     try {
       const response = await axios.get('/api/user/me', {
         headers: {

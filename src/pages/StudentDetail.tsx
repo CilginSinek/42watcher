@@ -6,16 +6,6 @@ import { Link } from 'react-router-dom';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
 
-// Mock data loader - only in development
-const loadMockData = async () => {
-  try {
-    const data = await import('../mockData.json');
-    return data.default || data;
-  } catch {
-    return { mockStudents: [] };
-  }
-};
-
 interface Student {
   id: number;
   login: string;
@@ -48,8 +38,6 @@ interface Student {
   attendanceDays?: Array<{ day: string; avgHours: number }>;
 }
 
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
 function StudentDetail() {
   const { login } = useParams<{ login: string }>();
   const navigate = useNavigate();
@@ -64,24 +52,14 @@ function StudentDetail() {
       setLoading(true);
       setError(null);
       try {
-        if (isLocalhost) {
-          const mockData = await loadMockData();
-          const foundStudent = mockData.mockStudents.find((s: { login: string }) => s.login === login);
-          if (foundStudent) {
-            setStudent(foundStudent as unknown as Student);
-          } else {
-            setError('Student not found');
-          }
+        const response = await axios.get(`/api/students/${login}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (response.data.student) {
+          setStudent(response.data.student);
         } else {
-          const response = await axios.get(`/api/students/${login}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          
-          if (response.data.student) {
-            setStudent(response.data.student);
-          } else {
-            setError('Student not found');
-          }
+          setError('Student not found');
         }
       } catch (err) {
         console.error('Error fetching student:', err);

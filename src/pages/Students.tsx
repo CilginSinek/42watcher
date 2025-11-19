@@ -5,16 +5,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ThemeToggle } from '../components/ThemeToggle';
 
-// Mock data loader - only in development
-const loadMockData = async () => {
-  try {
-    const data = await import('../mockData.json');
-    return data.default || data;
-  } catch {
-    return { mockStudents: [] };
-  }
-};
-
 interface Student {
   id: number;
   login: string;
@@ -48,8 +38,6 @@ interface PaginationInfo {
   totalPages: number;
 }
 
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
 function Students() {
   const { user, logout, token } = useAuth();
   const { studentsData, setStudentsData } = useCache();
@@ -69,33 +57,6 @@ function Students() {
   );
 
   const fetchStudents = async () => {
-    if (isLocalhost) {
-      setLoading(true);
-      const mockData = await loadMockData();
-      setTimeout(() => {
-        let filteredStudents = [...mockData.mockStudents] as Student[];
-        
-        if (search) {
-          const searchLower = search.toLowerCase();
-          filteredStudents = filteredStudents.filter(s => 
-            s.login.toLowerCase().includes(searchLower) ||
-            s.displayname.toLowerCase().includes(searchLower)
-          );
-        }
-        
-        if (status !== 'all') {
-          if (status === 'active') filteredStudents = filteredStudents.filter(s => s['active?']);
-          else if (status === 'alumni') filteredStudents = filteredStudents.filter(s => s['alumni?']);
-        }
-        
-        setStudents(filteredStudents);
-        setPagination({ total: filteredStudents.length, page: 1, limit: 50, totalPages: 1 });
-        setStudentsData({ students: filteredStudents, pagination: { total: filteredStudents.length, page: 1, limit: 50, totalPages: 1 } });
-        setLoading(false);
-      }, 300);
-      return;
-    }
-
     setLoading(true);
     try {
       const params = new URLSearchParams({
