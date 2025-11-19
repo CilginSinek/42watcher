@@ -1,7 +1,16 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import axios from 'axios';
-import mockData from '../mockData.json';
+
+// Mock data loader - only in development
+const loadMockData = async () => {
+  try {
+    const data = await import('../mockData.json');
+    return data.default || data;
+  } catch {
+    return { mockUser: null };
+  }
+};
 
 interface User {
   id: number;
@@ -46,9 +55,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     // Localhost'ta mock user kullan
     if (isLocalhost) {
-      setUser(mockData.mockUser as User);
-      setToken('mock-token-for-localhost');
-      setLoading(false);
+      loadMockData().then(mockData => {
+        setUser(mockData.mockUser as User);
+        setToken('mock-token-for-localhost');
+        setLoading(false);
+      });
       return;
     }
 
@@ -65,6 +76,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const fetchUserData = async (token: string) => {
     // Localhost'ta API çağrısı yapma
     if (isLocalhost) {
+      const mockData = await loadMockData();
       setUser(mockData.mockUser as User);
       setLoading(false);
       return;

@@ -125,19 +125,19 @@ export default async function handler(
       .limit(20)
       .lean();
 
-    // Location stats
-    const locationStats = await LocationStats.find({ login })
-      .select('month duration location')
-      .sort({ month: -1 })
-      .limit(12)
-      .lean();
+    // Location stats (kullanılmıyor ama ileride lazım olabilir)
+    // const locationStats = await LocationStats.find({ login })
+    //   .select('month duration location')
+    //   .sort({ month: -1 })
+    //   .limit(12)
+    //   .lean();
 
-    // Feedback bilgisi
-    const feedbacks = await Feedback.find({ login })
-      .select('rating comment date')
-      .sort({ date: -1 })
-      .limit(10)
-      .lean();
+    // Feedback bilgisi (kullanılmıyor ama ileride lazım olabilir)
+    // const feedbacks = await Feedback.find({ login })
+    //   .select('rating comment date')
+    //   .sort({ date: -1 })
+    //   .limit(10)
+    //   .lean();
 
     const feedbackCount = await Feedback.countDocuments({ login });
     const avgRatingResult = await Feedback.aggregate([

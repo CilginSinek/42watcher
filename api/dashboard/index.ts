@@ -309,7 +309,7 @@ export default async function handler(
         {
           $match: {
             ...campusFilter,
-            grade: { $exists: true, $ne: null, $ne: '' }
+            grade: { $exists: true, $ne: null, $nin: ['', null] }
           }
         },
         {

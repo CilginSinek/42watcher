@@ -6,7 +6,16 @@ import axios from 'axios';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { StudentModal } from '../components/StudentModal';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
-import mockData from '../mockData.json';
+
+// Mock data loader - only in development
+const loadMockData = async () => {
+  try {
+    const data = await import('../mockData.json');
+    return data.default || data;
+  } catch {
+    return { mockDashboard: null };
+  }
+};
 
 interface Project {
   project: string;
@@ -83,6 +92,7 @@ function Dashboard() {
   const fetchDashboardData = async () => {
     if (isLocalhost) {
       setLoading(true);
+      const mockData = await loadMockData();
       setTimeout(() => {
         setData(mockData.mockDashboard as DashboardData);
         setDashboardCache(campusId, mockData.mockDashboard);

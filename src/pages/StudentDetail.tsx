@@ -5,7 +5,16 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
-import mockData from '../mockData.json';
+
+// Mock data loader - only in development
+const loadMockData = async () => {
+  try {
+    const data = await import('../mockData.json');
+    return data.default || data;
+  } catch {
+    return { mockStudents: [] };
+  }
+};
 
 interface Student {
   id: number;
@@ -56,7 +65,8 @@ function StudentDetail() {
       setError(null);
       try {
         if (isLocalhost) {
-          const foundStudent = mockData.mockStudents.find(s => s.login === login);
+          const mockData = await loadMockData();
+          const foundStudent = mockData.mockStudents.find((s: { login: string }) => s.login === login);
           if (foundStudent) {
             setStudent(foundStudent as unknown as Student);
           } else {

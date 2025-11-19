@@ -4,7 +4,16 @@ import { useCache } from '../contexts/useCache';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ThemeToggle } from '../components/ThemeToggle';
-import mockData from '../mockData.json';
+
+// Mock data loader - only in development
+const loadMockData = async () => {
+  try {
+    const data = await import('../mockData.json');
+    return data.default || data;
+  } catch {
+    return { mockStudents: [] };
+  }
+};
 
 interface Student {
   id: number;
@@ -62,6 +71,7 @@ function Students() {
   const fetchStudents = async () => {
     if (isLocalhost) {
       setLoading(true);
+      const mockData = await loadMockData();
       setTimeout(() => {
         let filteredStudents = [...mockData.mockStudents] as Student[];
         
