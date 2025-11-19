@@ -38,6 +38,21 @@ interface Student {
   attendanceDays?: Array<{ day: string; avgHours: number }>;
 }
 
+// Tarih formatlama fonksiyonu
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const dateYear = date.getFullYear();
+  
+  const options: Intl.DateTimeFormatOptions = 
+    currentYear === dateYear 
+      ? { month: 'short', day: 'numeric' } // Aynı yıl: "Nov 19"
+      : { year: 'numeric', month: 'short', day: 'numeric' }; // Farklı yıl: "Nov 19, 2024"
+  
+  return date.toLocaleDateString('en-US', options);
+};
+
 function StudentDetail() {
   const { login } = useParams<{ login: string }>();
   const navigate = useNavigate();
@@ -103,45 +118,66 @@ function StudentDetail() {
     );
   }
 
-  const logTimesWeekly = [
-    { date: 'Mon', hours: 8 },
-    { date: 'Tue', hours: 9 },
-    { date: 'Wed', hours: 7.5 },
-    { date: 'Thu', hours: 10 },
-    { date: 'Fri', hours: 8.5 },
-    { date: 'Sat', hours: 4 },
-    { date: 'Sun', hours: 2 }
-  ];
+  // API'den gelen logTimes ve attendanceDays verilerini kullan
+  const logTimesData = student.logTimes || [];
+  const attendanceData = student.attendanceDays || [];
 
-  const logTimesMonthly = [
-    { week: 'Week 1', hours: 48 },
-    { week: 'Week 2', hours: 52 },
-    { week: 'Week 3', hours: 45 },
-    { week: 'Week 4', hours: 50 }
-  ];
+  // Log times verilerini haftalık, aylık, çeyreklik olarak dönüştür
+  const getLogTimesForTab = () => {
+    if (!logTimesData.length) return [];
+    
+    // Son 7 gün için haftalık
+    if (activeTab === 'weekly') {
+      return logTimesData.slice(-7).map(item => ({
+        date: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
+        hours: Math.round(item.duration / 3600 * 10) / 10 // saniyeyi saate çevir
+      }));
+    }
+    
+    // Son 4 hafta için aylık (7'li gruplar)
+    if (activeTab === 'monthly') {
+      const weeks = [];
+      for (let i = 0; i < 4; i++) {
+        const weekData = logTimesData.slice(i * 7, (i + 1) * 7);
+        if (weekData.length > 0) {
+          const totalHours = weekData.reduce((sum, item) => sum + item.duration, 0) / 3600;
+          weeks.push({ week: `Week ${i + 1}`, hours: Math.round(totalHours * 10) / 10 });
+        }
+      }
+      return weeks;
+    }
+    
+    // Son 3 ay için çeyreklik
+    if (activeTab === 'quarterly') {
+      const monthlyData: { [key: string]: number } = {};
+      logTimesData.forEach(item => {
+        const month = new Date(item.date).toLocaleDateString('en-US', { month: 'short' });
+        monthlyData[month] = (monthlyData[month] || 0) + item.duration / 3600;
+      });
+      return Object.entries(monthlyData).map(([month, hours]) => ({
+        month,
+        hours: Math.round(hours * 10) / 10
+      })).slice(-3);
+    }
+    
+    return [];
+  };
 
-  const logTimesQuarterly = [
-    { month: 'Jan', hours: 180 },
-    { month: 'Feb', hours: 195 },
-    { month: 'Mar', hours: 188 }
-  ];
+  // Attendance verilerini dönüştür (API'den gelen avgHours zaten saat cinsinde)
+  const attendanceByDay = attendanceData.length > 0 
+    ? attendanceData.map(item => ({
+        day: item.day,
+        percentage: Math.min(100, Math.round((item.avgHours / 12) * 100)) // 12 saat = %100
+      }))
+    : [];
 
-  const attendanceByDay = [
-    { day: 'Mon', percentage: 95 },
-    { day: 'Tue', percentage: 98 },
-    { day: 'Wed', percentage: 92 },
-    { day: 'Thu', percentage: 96 },
-    { day: 'Fri', percentage: 88 },
-    { day: 'Sat', percentage: 35 },
-    { day: 'Sun', percentage: 15 }
-  ];
-
-  const performanceData = [
-    { month: 'Jan', performance: 65 },
-    { month: 'Feb', performance: 72 },
-    { month: 'Mar', performance: 68 },
-    { month: 'Apr', performance: 85 }
-  ];
+  // Performance data - son projelerin ortalama skorlarından hesapla
+  const performanceData = student.projects && student.projects.length > 0
+    ? student.projects.slice(-4).map((project) => ({
+        month: formatDate(project.date),
+        performance: project.score
+      }))
+    : [];
 
   const projectStats = [
     { name: 'Success', value: student.project_count || 0, color: '#10b981' },
@@ -149,15 +185,17 @@ function StudentDetail() {
     { name: 'Failed', value: Math.ceil((student.project_count || 0) * 0.1), color: '#ef4444' }
   ];
 
-  const getLogTimesData = () => {
-    switch (activeTab) {
-      case 'monthly':
-        return logTimesMonthly;
-      case 'quarterly':
-        return logTimesQuarterly;
-      default:
-        return logTimesWeekly;
-    }
+  // Total duration hesaplama
+  const getTotalDuration = () => {
+    if (!logTimesData.length) return '0h';
+    const total = logTimesData.reduce((sum, item) => sum + item.duration, 0) / 3600;
+    return `${Math.round(total)}h`;
+  };
+
+  const getAvgDaily = () => {
+    if (!logTimesData.length) return '0h';
+    const avg = logTimesData.reduce((sum, item) => sum + item.duration, 0) / 3600 / logTimesData.length;
+    return `${Math.round(avg)}h`;
   };
 
   return (
@@ -258,13 +296,13 @@ function StudentDetail() {
                 <div style={{ backgroundColor: 'var(--bg-input)' }} className="px-4 py-2 rounded-lg">
                   <p className="text-(--text-tertiary) text-xs font-medium mb-1">Total Duration</p>
                   <p className="text-2xl font-bold text-(--primary)">
-                    {activeTab === 'weekly' ? '49h' : activeTab === 'monthly' ? '195h' : '563h'}
+                    {getTotalDuration()}
                   </p>
                 </div>
                 <div style={{ backgroundColor: 'var(--bg-input)' }} className="px-4 py-2 rounded-lg">
                   <p className="text-(--text-tertiary) text-xs font-medium mb-1">Avg Daily</p>
                   <p className="text-2xl font-bold text-(--primary)">
-                    {activeTab === 'weekly' ? '7h' : activeTab === 'monthly' ? '48h' : '187h'}
+                    {getAvgDaily()}
                   </p>
                 </div>
               </div>
@@ -286,7 +324,7 @@ function StudentDetail() {
             </div>
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={getLogTimesData()}>
+            <LineChart data={getLogTimesForTab()}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey={activeTab === 'weekly' ? 'date' : activeTab === 'monthly' ? 'week' : 'month'} stroke="var(--text-tertiary)" />
               <YAxis stroke="var(--text-tertiary)" />
@@ -376,7 +414,7 @@ function StudentDetail() {
                     >
                       <div className="flex-1 w-full">
                         <p className="font-semibold text-(--text-primary) text-sm md:text-base">{project.project}</p>
-                        <p className="text-xs md:text-sm text-(--text-secondary)">{new Date(project.date).toLocaleDateString()}</p>
+                        <p className="text-xs md:text-sm text-(--text-secondary)">{formatDate(project.date)}</p>
                       </div>
                       <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
                         <span className={`px-3 py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${

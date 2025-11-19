@@ -156,89 +156,89 @@ export default async function handler(
 
     const avgRating = avgRatingResult.length > 0 ? avgRatingResult[0].avgRating : 0;
 
-    // Log times için aggregation (son 30 gün)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Project count hesapla
+    const project_count = projects.length;
+    
+    // Evo performance hesapla (avgRating * 10 + feedbackCount)
+    const evoPerformance = avgRating ? Math.round((avgRating * 10) + feedbackCount) : null;
 
-    const logTimes = await LocationStats.aggregate([
-      {
-        $match: {
-          login,
-          createdAt: { $gte: thirtyDaysAgo }
-        }
-      },
-      {
-        $project: {
-          date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          duration: 1
-        }
-      },
-      {
-        $group: {
-          _id: '$date',
-          totalDuration: { $sum: { $toDouble: '$duration' } }
-        }
-      },
-      {
-        $sort: { _id: 1 }
-      },
-      {
-        $project: {
-          date: '$_id',
-          duration: '$totalDuration',
-          _id: 0
-        }
-      }
-    ]);
-
-    // Attendance days (haftalık ortalama)
-    const attendanceDays = await LocationStats.aggregate([
-      {
-        $match: { login }
-      },
-      {
-        $project: {
-          dayOfWeek: { $dayOfWeek: '$createdAt' },
-          duration: 1
-        }
-      },
-      {
-        $group: {
-          _id: '$dayOfWeek',
-          avgHours: { $avg: { $toDouble: '$duration' } }
-        }
-      },
-      {
-        $sort: { _id: 1 }
-      },
-      {
-        $project: {
-          day: {
-            $switch: {
-              branches: [
-                { case: { $eq: ['$_id', 1] }, then: 'Sun' },
-                { case: { $eq: ['$_id', 2] }, then: 'Mon' },
-                { case: { $eq: ['$_id', 3] }, then: 'Tue' },
-                { case: { $eq: ['$_id', 4] }, then: 'Wed' },
-                { case: { $eq: ['$_id', 5] }, then: 'Thu' },
-                { case: { $eq: ['$_id', 6] }, then: 'Fri' },
-                { case: { $eq: ['$_id', 7] }, then: 'Sat' }
-              ],
-              default: 'Unknown'
+    // Log times için LocationStats months verisinden son 30 günü çıkar
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthStr = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+    
+    const locationStatsDoc = await LocationStats.findOne({ login });
+    
+    const logTimes: Array<{ date: string; duration: number }> = [];
+    
+    if (locationStatsDoc && locationStatsDoc.months) {
+      // Son 2 ayın verilerini al
+      [lastMonthStr, currentMonth].forEach(monthKey => {
+        const monthData = locationStatsDoc.months.get(monthKey);
+        if (monthData && monthData.days) {
+          monthData.days.forEach((duration: string, day: string) => {
+            const date = new Date(day);
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            if (date >= thirtyDaysAgo) {
+              // Duration HH:MM:SS formatından saniyeye çevir
+              const parts = duration.split(':');
+              const seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+              logTimes.push({ date: day, duration: seconds });
             }
-          },
-          avgHours: 1,
-          _id: 0
+          });
         }
-      }
-    ]);
+      });
+    }
+    
+    // Tarihe göre sırala
+    logTimes.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    // Attendance days (haftalık ortalama) - tüm months verisinden hesapla
+    const dayStats: { [key: number]: { totalSeconds: number; count: number } } = {};
+    
+    if (locationStatsDoc && locationStatsDoc.months) {
+      locationStatsDoc.months.forEach((monthData: { days?: Map<string, string>; totalDuration?: string }) => {
+        if (monthData.days) {
+          monthData.days.forEach((duration: string, day: string) => {
+            const date = new Date(day);
+            const dayOfWeek = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+            
+            // Duration HH:MM:SS formatından saniyeye çevir
+            const parts = duration.split(':');
+            const seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+            
+            if (!dayStats[dayOfWeek]) {
+              dayStats[dayOfWeek] = { totalSeconds: 0, count: 0 };
+            }
+            dayStats[dayOfWeek].totalSeconds += seconds;
+            dayStats[dayOfWeek].count += 1;
+          });
+        }
+      });
+    }
+    
+    // Ortalamayı hesapla ve formatla
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const attendanceDays = dayNames.map((dayName, dayOfWeek) => {
+      const stats = dayStats[dayOfWeek];
+      const avgHours = stats ? stats.totalSeconds / stats.count / 3600 : 0;
+      return {
+        day: dayName,
+        avgHours: Math.round(avgHours * 10) / 10 // 1 ondalık basamak
+      };
+    });
 
     // Student objesini düzgün serialize et
     const studentData = {
       ...student,
       projects,
+      project_count,
       feedbackCount,
       avgRating,
+      evoPerformance,
       logTimes,
       attendanceDays
     };
