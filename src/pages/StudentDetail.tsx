@@ -199,7 +199,7 @@ function StudentDetail() {
     return `${Math.round(avg)}h`;
   };
 
-  // Projeleri isme göre grupla
+  // Projeleri isme göre grupla ve her grup içinde tarihe göre sırala
   const groupedProjects = student.projects?.reduce((acc, project) => {
     if (!acc[project.project]) {
       acc[project.project] = [];
@@ -207,6 +207,13 @@ function StudentDetail() {
     acc[project.project].push(project);
     return acc;
   }, {} as Record<string, Array<{ project: string; score: number; date: string; status: string }>>);
+
+  // Her grup içindeki projeleri tarihe göre sırala (en yeni önce)
+  if (groupedProjects) {
+    Object.keys(groupedProjects).forEach(key => {
+      groupedProjects[key].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
+  }
 
   const toggleProjectExpansion = (projectName: string) => {
     setExpandedProjects(prev => {
@@ -431,7 +438,7 @@ function StudentDetail() {
                   Object.entries(groupedProjects).map(([projectName, projectList]) => {
                     const isExpanded = expandedProjects.has(projectName);
                     const hasMultiple = projectList.length > 1;
-                    const latestProject = projectList[projectList.length - 1];
+                    const latestProject = projectList[0]; // İlk eleman en yeni (sorted by date desc)
                     
                     return (
                       <div key={projectName} className="rounded-lg" style={{ backgroundColor: 'var(--bg-input)' }}>
@@ -482,7 +489,7 @@ function StudentDetail() {
                           <div className="border-t border-(--border) px-3 md:px-4 pb-3 pt-2">
                             <p className="text-xs text-(--text-tertiary) mb-2 font-medium">Previous Attempts:</p>
                             <div className="space-y-2">
-                              {projectList.slice(0, -1).reverse().map((project, idx) => (
+                              {projectList.slice(1).map((project, idx) => (
                                 <div key={idx} className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 p-2 rounded bg-(--bg-primary) bg-opacity-50">
                                   <p className="text-xs md:text-sm text-(--text-secondary)">{formatDate(project.date)}</p>
                                   <div className="flex items-center gap-2">
