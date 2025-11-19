@@ -162,11 +162,13 @@ export default async function handler(
     // Evo performance hesapla (avgRating * 10 + feedbackCount)
     const evoPerformance = avgRating ? Math.round((avgRating * 10) + feedbackCount) : null;
 
-    // Log times için LocationStats months verisinden son 30 günü çıkar
+    // Log times için LocationStats months verisinden son 90 günü çıkar (quarterly için 3 ay)
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const lastMonthStr = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    const twoMonthsAgoStr = `${twoMonthsAgo.getFullYear()}-${String(twoMonthsAgo.getMonth() + 1).padStart(2, '0')}`;
     
     const locationStatsDoc = await LocationStats.findOne({ login });
     
@@ -181,13 +183,13 @@ export default async function handler(
         // Map size'ı kontrol et
         console.log('Months Map size:', locationStatsDoc.months.size);
         
-        // 30 gün önceyi bir kez hesapla
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        console.log('Thirty days ago:', thirtyDaysAgo.toISOString());
+        // 90 gün önceyi bir kez hesapla (quarterly için)
+        const ninetyDaysAgo = new Date();
+        ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+        console.log('Ninety days ago:', ninetyDaysAgo.toISOString());
         
-        // Son 2 ayın verilerini al
-        [lastMonthStr, currentMonth].forEach(monthKey => {
+        // Son 3 ayın verilerini al
+        [twoMonthsAgoStr, lastMonthStr, currentMonth].forEach(monthKey => {
           const monthData = locationStatsDoc.months.get(monthKey);
           console.log(`Month ${monthKey} data:`, !!monthData);
           
@@ -200,9 +202,9 @@ export default async function handler(
               const fullDate = `${monthKey}-${String(day).padStart(2, '0')}`;
               const date = new Date(fullDate);
               
-              console.log(`Checking day ${day}, fullDate: ${fullDate}, is after thirtyDaysAgo: ${date >= thirtyDaysAgo}`);
+              console.log(`Checking day ${day}, fullDate: ${fullDate}, is after ninetyDaysAgo: ${date >= ninetyDaysAgo}`);
               
-              if (date >= thirtyDaysAgo) {
+              if (date >= ninetyDaysAgo) {
                 dayCount++;
                 // Duration HH:MM:SS formatından saniyeye çevir
                 const parts = duration.split(':');
