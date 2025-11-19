@@ -88,6 +88,8 @@ function Dashboard() {
       const response = await axios.get(`/api/dashboard?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('Dashboard API Response:', response.data);
+      console.log('Grade Distribution:', response.data.gradeDistribution);
       setData(response.data);
       setDashboardCache(campusId, response.data);
     } catch (error) {
@@ -248,29 +250,35 @@ function Dashboard() {
 
               <div className="card">
                 <h3 className="text-lg font-bold mb-6">Grade Distribution</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={data.gradeDistribution || []}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, value }) => `${name}: ${value}`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {(data.gradeDistribution || []).map((_entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                      labelStyle={{ color: 'var(--text-primary)' }}
-                      itemStyle={{ color: document.documentElement.classList.contains('dark') ? '#fff' : 'var(--text-primary)' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                {data.gradeDistribution && data.gradeDistribution.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={data.gradeDistribution}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, value }) => `${name}: ${value}`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {data.gradeDistribution.map((_entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                        labelStyle={{ color: 'var(--text-primary)' }}
+                        itemStyle={{ color: document.documentElement.classList.contains('dark') ? '#fff' : 'var(--text-primary)' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <p className="text-(--text-secondary)">No grade data available</p>
+                  </div>
+                )}
               </div>
             </div>
 
