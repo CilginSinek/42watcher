@@ -105,14 +105,16 @@ export default async function handler(
   try {
     await connectDB();
 
-    const { login } = req.query;
+    // Vercel dynamic route: /api/students/[login] -> req.query.login
+    const loginParam = req.query.login;
+    const login = Array.isArray(loginParam) ? loginParam[0] : loginParam;
 
     if (!login || typeof login !== 'string') {
       return res.status(400).json({ error: 'Login parameter is required' });
     }
 
     // Student bilgisini getir
-    const student = await Student.findOne({ login }).lean();
+    const student = await Student.findOne({ login: login }).lean();
 
     if (!student) {
       return res.status(404).json({ error: 'Student not found' });

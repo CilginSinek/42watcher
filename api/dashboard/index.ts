@@ -309,6 +309,7 @@ export default async function handler(
         {
           $match: {
             ...campusFilter,
+            active: true,
             grade: { $exists: true, $ne: null, $nin: ['', null] }
           }
         },
@@ -343,7 +344,7 @@ export default async function handler(
 
     const uniqueLogins = Array.from(allLogins);
 
-    // TEK SEFERDE TÜM STUDENT BİLGİLERİNİ ÇEK
+    // TEK SEFERDE TÜM STUDENT BİLGİLERİNİ ÇEK - SADECE GEREKEN BİLGİLER
     const [allStudents, allPatronage, allProjects, allFeedbacks] = await Promise.all([
       Student.find({ login: { $in: uniqueLogins } })
         .select('login displayname image correction_point wallet grade level has_cheats cheat_count')
@@ -351,10 +352,31 @@ export default async function handler(
       Patronage.find({ login: { $in: uniqueLogins } })
         .select('login godfathers children')
         .lean(),
-      Project.find({ login: { $in: uniqueLogins } })
-        .select('login project score status date')
-        .sort({ date: -1 })
-        .lean(),
+      // Sadece top 3 projeyi al her öğrenci için (dashboard'da çok proje göstermiyoruz)
+      Project.aggregate([
+        { $match: { login: { $in: uniqueLogins } } },
+        { $sort: { date: -1, score: -1 } },
+        {
+          $group: {
+            _id: '$login',
+            projects: { 
+              $push: { 
+                project: '$project', 
+                score: '$score', 
+                status: '$status', 
+                date: '$date' 
+              } 
+            }
+          }
+        },
+        {
+          $project: {
+            login: '$_id',
+            projects: { $slice: ['$projects', 3] },
+            _id: 0
+          }
+        }
+      ]),
       Feedback.find({ login: { $in: uniqueLogins } })
         .select('login rating ratingDetails')
         .lean()
@@ -410,10 +432,14 @@ export default async function handler(
     const getStudentWithProjects = (login: string) => {
       const student = studentsWithPatronage.find((s: Record<string, unknown>) => s.login === login);
       if (!student) return null;
-      const projects = allProjects.filter((p: Record<string, unknown>) => p.login === login);
+      
+      // allProjects artık aggregation sonucu, doğru yapıya sahip
+      const projectData = (allProjects as unknown as Array<{ login: string; projects: Array<Record<string, unknown>> }>)
+        .find((p) => p.login === login);
+      
       return {
         ...student,
-        projects: projects
+        projects: projectData?.projects || []
       };
     };
 

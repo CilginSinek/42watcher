@@ -267,6 +267,7 @@ function Dashboard() {
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}
                       labelStyle={{ color: 'var(--text-primary)' }}
+                      itemStyle={{ color: document.documentElement.classList.contains('dark') ? '#fff' : 'var(--text-primary)' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
