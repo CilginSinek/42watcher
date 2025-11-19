@@ -181,6 +181,11 @@ export default async function handler(
         // Map size'ı kontrol et
         console.log('Months Map size:', locationStatsDoc.months.size);
         
+        // 30 gün önceyi bir kez hesapla
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        console.log('Thirty days ago:', thirtyDaysAgo.toISOString());
+        
         // Son 2 ayın verilerini al
         [lastMonthStr, currentMonth].forEach(monthKey => {
           const monthData = locationStatsDoc.months.get(monthKey);
@@ -189,19 +194,21 @@ export default async function handler(
           if (monthData && monthData.days) {
             console.log(`Month ${monthKey} days size:`, monthData.days.size);
             
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
+            let dayCount = 0;
             monthData.days.forEach((duration: string, day: string) => {
               const date = new Date(day);
               
+              console.log(`Checking day ${day}, date: ${date.toISOString()}, is after thirtyDaysAgo: ${date >= thirtyDaysAgo}`);
+              
               if (date >= thirtyDaysAgo) {
+                dayCount++;
                 // Duration HH:MM:SS formatından saniyeye çevir
                 const parts = duration.split(':');
                 const seconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
                 logTimes.push({ date: day, duration: seconds });
               }
             });
+            console.log(`Month ${monthKey} added ${dayCount} days to logTimes`);
           }
         });
       }
