@@ -180,11 +180,16 @@ function StudentDetail() {
       }))
     : [];
 
+  // Project stats - gerçek verilerden hesapla
+  const successCount = student.projects?.filter(p => p.status === 'success').length || 0;
+  const failCount = student.projects?.filter(p => p.status === 'fail').length || 0;
+  const inProgressCount = student.projects?.filter(p => p.status === 'in_progress').length || 0;
+
   const projectStats = [
-    { name: 'Success', value: student.project_count || 0, color: '#10b981' },
-    { name: 'In Progress', value: Math.ceil((student.project_count || 0) * 0.3), color: '#f59e0b' },
-    { name: 'Failed', value: Math.ceil((student.project_count || 0) * 0.1), color: '#ef4444' }
-  ];
+    { name: 'Success', value: successCount, color: '#10b981' },
+    { name: 'In Progress', value: inProgressCount, color: '#f59e0b' },
+    { name: 'Failed', value: failCount, color: '#ef4444' }
+  ].filter(stat => stat.value > 0); // Sadece 0'dan büyük olanları göster
 
   // Total duration hesaplama
   const getTotalDuration = () => {
