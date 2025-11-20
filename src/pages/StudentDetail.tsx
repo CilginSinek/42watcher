@@ -29,6 +29,8 @@ interface Student {
   is_trans: boolean;
   grade: string | null;
   project_count?: number;
+  has_cheats?: boolean;
+  cheat_count?: number;
   projects?: Array<{ project: string; score: number; date: string; status: string }>;
   patronage?: { godfathers?: Array<{ login: string }>; children?: Array<{ login: string }> };
   feedbackCount?: number;
@@ -204,8 +206,12 @@ function StudentDetail() {
     return `${Math.round(avg)}h`;
   };
 
+  // Cheat projeleri filtrele (score === -42)
+  const cheatProjects = student.projects?.filter(p => p.score === -42) || [];
+  const normalProjects = student.projects?.filter(p => p.score !== -42) || [];
+
   // Projeleri isme göre grupla - # varsa sadece # öncesini al
-  const groupedProjects = student.projects?.reduce((acc, project) => {
+  const groupedProjects = normalProjects?.reduce((acc, project) => {
     // "Exam Rank 02 #5" -> "Exam Rank 02"
     const baseProjectName = project.project.includes('#') 
       ? project.project.split('#')[0].trim() 
@@ -310,6 +316,7 @@ function StudentDetail() {
                 <div className="flex gap-2 flex-wrap justify-start md:justify-end w-full md:w-auto">
                   {student['alumni?'] && <span className="px-3 md:px-4 py-1 md:py-2 bg-green-100 text-green-700 rounded-full text-xs md:text-sm font-semibold">Alumni</span>}
                   {student['active?'] && <span className="px-3 md:px-4 py-1 md:py-2 bg-blue-100 text-blue-700 rounded-full text-xs md:text-sm font-semibold">Active</span>}
+                  {student.has_cheats && <span className="px-3 md:px-4 py-1 md:py-2 bg-red-100 text-red-700 rounded-full text-xs md:text-sm font-semibold">⚠️ Cheater</span>}
                 </div>
               </div>
 
@@ -450,6 +457,36 @@ function StudentDetail() {
         {/* Info Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           <div className="lg:col-span-2 space-y-6 md:space-y-8">
+            {/* Cheat Projects */}
+            {cheatProjects.length > 0 && (
+              <div className="card" style={{ borderColor: '#ef4444', borderWidth: '2px' }}>
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-lg font-bold text-red-700">⚠️ Cheated Projects</h3>
+                  <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
+                    {cheatProjects.length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {cheatProjects.map((project, idx) => (
+                    <div key={idx} className="rounded-lg p-3 md:p-4" style={{ backgroundColor: '#fee2e2' }}>
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                        <div className="flex-1">
+                          <p className="font-semibold text-red-900 text-sm md:text-base">{project.project}</p>
+                          <p className="text-xs md:text-sm text-red-700">{formatDate(project.date)}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="px-3 py-1 bg-red-200 text-red-900 rounded-full text-xs md:text-sm font-medium">
+                            Cheated
+                          </span>
+                          <span className="text-lg md:text-2xl font-bold text-red-900">-42</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="card">
               <h3 className="text-lg font-bold text-(--text-primary) mb-4">📋 Projects</h3>
               <div className="space-y-3">

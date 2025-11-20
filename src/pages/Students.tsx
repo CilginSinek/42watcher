@@ -28,6 +28,7 @@ interface Student {
   is_trans: boolean;
   project_count?: number;
   cheat_count?: number;
+  has_cheats?: boolean;
   locationHistory?: { month: string; duration: number }[];
 }
 
@@ -225,6 +226,9 @@ function Students() {
 
                       <div className="flex gap-2 mt-2 flex-wrap">
                         {getStatusBadge(student)}
+                        {student.has_cheats && (
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">⚠️ Cheat</span>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
