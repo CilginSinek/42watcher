@@ -594,7 +594,7 @@ function StudentDetail() {
 
           <div className="space-y-6 md:space-y-8">
             {/* Feedback */}
-            {student.feedbackCount && student.feedbackCount > 0 && student.avgRating && (
+            {student.feedbackCount !== undefined && student.feedbackCount > 0 && student.avgRating !== undefined && (
               <div className="card">
                 <h3 className="text-lg font-bold text-(--text-primary) mb-4">Evaluation</h3>
                 <div className="space-y-3">
