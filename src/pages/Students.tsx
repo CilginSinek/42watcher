@@ -27,6 +27,7 @@ interface Student {
   'staff?': boolean;
   sinker?: boolean;
   freeze?: boolean;
+  blackholed?: boolean;
   is_piscine: boolean;
   is_trans: boolean;
   grade?: string | null;
@@ -150,20 +151,27 @@ function Students() {
     // Staff kontrolü en önce
     if (student['staff?']) return <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold">👨‍💻 Staff</span>;
     
+    // Blackholed kontrolü
+    if (student.blackholed) return <span className="px-2 py-1 bg-black text-white rounded-full text-xs font-semibold">🕳️ Blackholed</span>;
+    
     // Sinker kontrolü
     if (student.sinker) return <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">⚓ Sinker</span>;
     
     // Freeze kontrolü
     if (student.freeze) return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">❄️ Freeze</span>;
     
+    // Inactive kontrolü (grade ve alumni/active'den önce)
+    if (!student['active?'] && !student['alumni?']) return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">⭕ Inactive</span>;
+    
     // Grade bazlı badge göster
     if (student.grade === 'Transcender') return <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">🚀 Transcender</span>;
     if (student.grade === 'Cadet') return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">👨‍🚀 Cadet</span>;
     if (student.grade === 'Piscine') return <span className="px-2 py-1 bg-cyan-100 text-cyan-700 rounded-full text-xs font-semibold">🏊 Piscine</span>;
     
-    // Fallback: Alumni/Active/Inactive
+    // Alumni ve Active en sonda
     if (student['alumni?']) return <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">🎓 Alumni</span>;
     if (student['active?']) return <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">✅ Active</span>;
+    
     return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">⭕ Inactive</span>;
   };
 
@@ -233,6 +241,7 @@ function Students() {
                 <option value="active">Active</option>
                 <option value="alumni">Alumni</option>
                 <option value="staff">Staff</option>
+                <option value="blackholed">Blackholed</option>
                 <option value="transcender">Transcender</option>
                 <option value="cadet">Cadet</option>
                 <option value="piscine">Piscine</option>
