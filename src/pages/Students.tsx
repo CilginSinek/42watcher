@@ -26,10 +26,18 @@ interface Student {
   'alumni?': boolean;
   is_piscine: boolean;
   is_trans: boolean;
+  pool_month?: string;
+  pool_year?: string;
   project_count?: number;
   cheat_count?: number;
   has_cheats?: boolean;
   locationHistory?: { month: string; duration: number }[];
+}
+
+interface Pool {
+  month: string;
+  year: string;
+  count: number;
 }
 
 interface PaginationInfo {
@@ -49,6 +57,9 @@ function Students() {
   const [loading, setLoading] = useState(!studentsData);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
+  const [poolMonth, setPoolMonth] = useState('');
+  const [poolYear, setPoolYear] = useState('');
+  const [pools, setPools] = useState<Pool[]>([]);
   const [sortBy, setSortBy] = useState('login');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [pagination, setPagination] = useState<PaginationInfo>(
@@ -56,6 +67,17 @@ function Students() {
       ? (studentsData as { pagination: PaginationInfo }).pagination 
       : { total: 0, page: 1, limit: 50, totalPages: 0 }
   );
+
+  const fetchPools = async () => {
+    try {
+      const response = await axios.get('/api/students/pools', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPools(response.data.pools);
+    } catch (error) {
+      console.error('Error fetching pools:', error);
+    }
+  };
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -66,7 +88,9 @@ function Students() {
         sortBy,
         order,
         ...(search && { search }),
-        ...(status !== 'all' && { status })
+        ...(status !== 'all' && { status }),
+        ...(poolMonth && { poolMonth }),
+        ...(poolYear && { poolYear })
       });
 
       const response = await axios.get(`/api/students?${params}`, {
@@ -84,14 +108,36 @@ function Students() {
 
   useEffect(() => {
     if (!token) return;
+    fetchPools();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
     fetchStudents();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, sortBy, order, status, token]);
+  }, [pagination.page, sortBy, order, status, poolMonth, poolYear, token]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPagination(prev => ({ ...prev, page: 1 }));
     fetchStudents();
+  };
+
+  const handlePoolChange = (value: string) => {
+    if (value === 'all') {
+      setPoolMonth('');
+      setPoolYear('');
+    } else {
+      const [month, year] = value.split('-');
+      setPoolMonth(month);
+      setPoolYear(year);
+    }
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const capitalizeMonth = (month: string) => {
+    return month.charAt(0).toUpperCase() + month.slice(1);
   };
 
   const getStatusBadge = (student: Student) => {
@@ -153,7 +199,7 @@ function Students() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <select
                 value={status}
                 onChange={(e) => {
@@ -168,6 +214,19 @@ function Students() {
               </select>
 
               <select
+                value={poolMonth && poolYear ? `${poolMonth}-${poolYear}` : 'all'}
+                onChange={(e) => handlePoolChange(e.target.value)}
+                className="input py-2 text-sm"
+              >
+                <option value="all">All Pools</option>
+                {pools.map((pool) => (
+                  <option key={`${pool.month}-${pool.year}`} value={`${pool.month}-${pool.year}`}>
+                    {capitalizeMonth(pool.month)} {pool.year} ({pool.count})
+                  </option>
+                ))}
+              </select>
+
+              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="input py-2 text-sm"
@@ -175,6 +234,8 @@ function Students() {
                 <option value="login">Sort by Login</option>
                 <option value="correction_point">Correction Points</option>
                 <option value="wallet">Wallet</option>
+                <option value="pool_year">Pool Year</option>
+                <option value="pool_month">Pool Month</option>
                 <option value="project_count">Project Count</option>
                 <option value="cheat_count">Cheat Count</option>
                 <option value="godfather_count">Godfather Count</option>
@@ -235,6 +296,11 @@ function Students() {
                         {getStatusBadge(student)}
                         {student.has_cheats && (
                           <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">⚠️ Cheat</span>
+                        )}
+                        {student.pool_month && student.pool_year && (
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                            🏊 {capitalizeMonth(student.pool_month)} {student.pool_year}
+                          </span>
                         )}
                       </div>
 

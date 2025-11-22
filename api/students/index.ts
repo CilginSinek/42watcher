@@ -138,6 +138,8 @@ export default async function handler(
       search, 
       status,
       campusId,
+      poolMonth,
+      poolYear,
       sortBy = 'login',
       order = 'asc',
       limit = '100',
@@ -150,6 +152,16 @@ export default async function handler(
     // Campus filter
     if (campusId && typeof campusId === 'string') {
       matchFilter.campusId = parseInt(campusId);
+    }
+
+    // Pool month filter
+    if (poolMonth && typeof poolMonth === 'string') {
+      matchFilter.pool_month = poolMonth.toLowerCase();
+    }
+
+    // Pool year filter
+    if (poolYear && typeof poolYear === 'string') {
+      matchFilter.pool_year = poolYear;
     }
 
     // Search filter (escape user input to prevent regex injection / ReDoS)
@@ -225,6 +237,8 @@ export default async function handler(
       'avg_rating': 'avgRating',
       'wallet': 'wallet',
       'correction_point': 'correction_point',
+      'pool_month': 'pool_month',
+      'pool_year': 'pool_year',
       'login': 'login'
     };
 
