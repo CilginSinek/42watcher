@@ -182,32 +182,39 @@ export default async function handler(
         case 'staff':
           matchFilter['staff?'] = true;
           break;
-        case 'test':
-          matchFilter.is_test = true;
-          break;
-        case 'active':
-          matchFilter['active?'] = true;
-          matchFilter['alumni?'] = { $ne: true };
-          matchFilter.blackholed = { $ne: true };
-          matchFilter.is_piscine = false;
-          break;
-        case 'blackhole':
+        case 'blackholed':
           matchFilter.blackholed = true;
-          break;
-        case 'piscine':
-          matchFilter.is_piscine = true;
-          break;
-        case 'transfer':
-          matchFilter.is_trans = true;
-          break;
-        case 'alumni':
-          matchFilter['alumni?'] = true;
           break;
         case 'sinker':
           matchFilter.sinker = true;
           break;
         case 'freeze':
           matchFilter.freeze = true;
+          break;
+        case 'transcender':
+          matchFilter.grade = 'Transcender';
+          break;
+        case 'cadet':
+          matchFilter.grade = 'Cadet';
+          break;
+        case 'piscine':
+          matchFilter.grade = 'Piscine';
+          break;
+        case 'alumni':
+          matchFilter['alumni?'] = true;
+          break;
+        case 'active':
+          matchFilter['active?'] = true;
+          matchFilter['alumni?'] = { $ne: true };
+          break;
+        case 'test':
+          matchFilter.is_test = true;
+          break;
+        case 'blackhole':
+          matchFilter.blackholed = true;
+          break;
+        case 'transfer':
+          matchFilter.is_trans = true;
           break;
         case 'cheaters': {
           const cheaterLogins = await Project.distinct('login', { 
