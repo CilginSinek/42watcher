@@ -26,6 +26,7 @@ interface Student {
   'alumni?': boolean;
   is_piscine: boolean;
   is_trans: boolean;
+  grade?: string | null;
   pool_month?: string;
   pool_year?: string;
   project_count?: number;
@@ -143,9 +144,17 @@ function Students() {
   };
 
   const getStatusBadge = (student: Student) => {
-    if (student['alumni?']) return <span className="badge badge-success text-xs">Alumni</span>;
-    if (student['active?']) return <span className="badge badge-success text-xs">Active</span>;
-    return <span className="badge badge-secondary text-xs">Inactive</span>;
+    // Grade bazlı badge göster
+    if (student.grade === 'Transcender') return <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold">🚀 Transcender</span>;
+    if (student.grade === 'Cadet') return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">👨‍🚀 Cadet</span>;
+    if (student.grade === 'Piscine') return <span className="px-2 py-1 bg-cyan-100 text-cyan-700 rounded-full text-xs font-semibold">🏊 Piscine</span>;
+    if (student.grade === 'Sinker') return <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">⚓ Sinker</span>;
+    if (student.grade === 'Freeze') return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">❄️ Freeze</span>;
+    
+    // Fallback: Alumni/Active/Inactive
+    if (student['alumni?']) return <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">🎓 Alumni</span>;
+    if (student['active?']) return <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">✅ Active</span>;
+    return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">⭕ Inactive</span>;
   };
 
   const handleStudentClick = (student: Student) => {
@@ -213,6 +222,12 @@ function Students() {
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
                 <option value="alumni">Alumni</option>
+                <option value="transcender">Transcender</option>
+                <option value="cadet">Cadet</option>
+                <option value="piscine">Piscine</option>
+                <option value="sinker">Sinker</option>
+                <option value="freeze">Freeze</option>
+                <option value="inactive">Inactive</option>
               </select>
 
               <select
