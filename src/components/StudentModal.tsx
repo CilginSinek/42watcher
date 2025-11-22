@@ -23,6 +23,22 @@ const isValidLogin = (login: string): boolean => {
   return validLoginPattern.test(login) && login.length > 0 && login.length <= 50;
 };
 
+// Helper function to validate image URL
+function getSafeImageLink(link: string | undefined): string {
+  // Only allow links via https/http or starting with '/'
+  if (!link) return "/placeholder.svg";
+  try {
+    // Allow relative paths only (start with /), or web URLs only
+    if (link.startsWith("/")) return link;
+    const url = new URL(link, window.location.origin); // Try to parse as absolute or relative
+    if (url.protocol === "https:" || url.protocol === "http:") return url.href;
+    // Otherwise block (including javascript:, data:, etc.)
+    return "/placeholder.svg";
+  } catch {
+    return "/placeholder.svg";
+  }
+}
+
 export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
   const navigate = useNavigate();
 
@@ -35,6 +51,9 @@ export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
 
   // Validate login for safe URL usage
   const safeLogin = isValidLogin(student.login) ? student.login : null;
+
+  // Validate image link before using in src
+  const safeImageLink = getSafeImageLink(student.image?.link);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -55,7 +74,7 @@ export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
         {/* Student Info */}
         <div className="flex gap-4 mb-6 flex-col sm:flex-row">
           <img
-            src={student.image.link || "/placeholder.svg"}
+            src={safeImageLink}
             alt={student.login}
             className="w-16 h-16 rounded-lg object-cover shrink-0"
           />
