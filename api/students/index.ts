@@ -207,6 +207,10 @@ export default async function handler(
           matchFilter['active?'] = true;
           matchFilter['alumni?'] = { $ne: true };
           break;
+        case 'inactive':
+          matchFilter['active?'] = false;
+          matchFilter['alumni?'] = { $ne: true };
+          break;
         case 'test':
           matchFilter.is_test = true;
           break;

@@ -248,6 +248,7 @@ function Students() {
                 <option value="sinker">Sinker</option>
                 <option value="freeze">Freeze</option>
                 <option value="inactive">Inactive</option>
+                <option value="test">Test</option>
               </select>
 
               <select
