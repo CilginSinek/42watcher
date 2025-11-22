@@ -301,10 +301,22 @@ function Students() {
                     />
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-(--text-primary) truncate group-hover:text-(--primary) transition text-sm sm:text-base">
+                      <Link 
+                        to={`/students/${student.login}`}
+                        className="font-semibold text-(--text-primary) truncate hover:text-(--primary) transition text-sm sm:text-base block"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {student.displayname || student.login}
-                      </h3>
-                      <p className="text-(--text-tertiary) text-xs sm:text-sm truncate">@{student.login}</p>
+                      </Link>
+                      <a
+                        href={`https://profile.intra.42.fr/users/${student.login}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-(--text-tertiary) hover:text-(--primary) text-xs sm:text-sm truncate block transition"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        @{student.login}
+                      </a>
 
                       <div className="flex gap-2 mt-2 flex-wrap">
                         {getStatusBadge(student)}
