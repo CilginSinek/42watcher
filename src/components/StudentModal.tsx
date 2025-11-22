@@ -16,6 +16,13 @@ interface StudentModalProps {
   onClose: () => void;
 }
 
+// Helper function to validate and sanitize login username
+const isValidLogin = (login: string): boolean => {
+  // Login should only contain alphanumeric characters, underscores, dashes, or dots
+  const validLoginPattern = /^[a-zA-Z0-9_.-]+$/;
+  return validLoginPattern.test(login) && login.length > 0 && login.length <= 50;
+};
+
 export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
   const navigate = useNavigate();
 
@@ -25,6 +32,9 @@ export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
     navigate(`/students/${student.login}`);
     onClose();
   };
+
+  // Validate login for safe URL usage
+  const safeLogin = isValidLogin(student.login) ? student.login : null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -50,14 +60,20 @@ export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
             className="w-16 h-16 rounded-lg object-cover shrink-0"
           />
           <div className="flex-1 min-w-0">
-            <a
-              href={`https://profile.intra.42.fr/users/${student.login}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-lg font-bold text-(--primary) hover:opacity-80 transition block truncate"
-            >
-              {student.displayname}
-            </a>
+            {safeLogin ? (
+              <a
+                href={`https://profile.intra.42.fr/users/${safeLogin}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-lg font-bold text-(--primary) hover:opacity-80 transition block truncate"
+              >
+                {student.displayname}
+              </a>
+            ) : (
+              <span className="text-lg font-bold text-(--text-primary) block truncate">
+                {student.displayname}
+              </span>
+            )}
             <p className="text-(--text-secondary) text-sm truncate">@{student.login}</p>
           </div>
         </div>
