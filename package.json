@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "couchbase": "^4.6.0",
+    "couchbase": "4.4.3",
     "next": "16.0.5",
     "next-auth": "^4.24.13",
     "react": "19.2.0",
