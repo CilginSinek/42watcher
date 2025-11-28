@@ -17,9 +17,9 @@ async function verifyToken(token: string): Promise<boolean> {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { login: string } }
+  { params }: { params: Promise<{ login: string }> }
 ) {
-  const { login } = params;
+  const { login } = await params;
 
   // Check auth (skip for localhost)
   const host = request.headers.get('host') || '';
