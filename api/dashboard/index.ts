@@ -259,17 +259,17 @@ export default async function handler(
 
       // Tüm zamanlar en yüksek level
       (async () => {
-        const campusFilter = campusId ? 'WHERE campusId = $campusId' : 'WHERE level IS NOT NULL';
+        const campusFilter = campusId ? 'WHERE campusId = $campusId' : 'WHERE `level` IS NOT NULL';
         const queryParams: any = {};
         if (campusId) {
           queryParams.campusId = campusId;
         }
         const query = `
-          SELECT login, level
+          SELECT login, \`level\`
           FROM ${studentsKeyspace}
           ${campusFilter}
-            AND level IS NOT NULL
-          ORDER BY level DESC
+            AND \`level\` IS NOT NULL
+          ORDER BY \`level\` DESC
           LIMIT 5
         `;
         const result = await executeQuery(query, {
@@ -288,7 +288,7 @@ export default async function handler(
         const query = `
           SELECT 
             grade AS name,
-            COUNT(*) AS value
+            COUNT(*) AS \`value\`
           FROM ${studentsKeyspace}
           WHERE \`active?\` = true
             AND grade IS NOT NULL
@@ -366,7 +366,7 @@ export default async function handler(
         if (uniqueLogins.length === 0) return [];
         const placeholders = uniqueLogins.map((_, i) => `$login${i}`).join(', ');
         const query = `
-          SELECT login, displayname, image, correction_point, wallet, grade, level, has_cheats, cheat_count
+          SELECT login, displayname, image, correction_point, wallet, grade, \`level\`, has_cheats, cheat_count
           FROM ${studentsKeyspace}
           WHERE login IN [${placeholders}]
         `;

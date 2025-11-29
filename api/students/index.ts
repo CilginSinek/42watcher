@@ -238,7 +238,7 @@ export default async function handler(
 
     // PHASE 1: Get all students matching filters and calculate sort values
     // First, get all students matching the filter
-    const sortField = actualSortField === 'login' ? 'login' : actualSortField === 'wallet' ? 'wallet' : actualSortField === 'correction_point' ? 'correction_point' : actualSortField === 'level' ? 'level' : 'login';
+    const sortField = actualSortField === 'login' ? 'login' : actualSortField === 'wallet' ? 'wallet' : actualSortField === 'correction_point' ? 'correction_point' : actualSortField === 'level' ? '`level`' : 'login';
     const studentsQuery = `
       SELECT login, ${sortField} AS sortValue
       FROM ${studentsKeyspace}
