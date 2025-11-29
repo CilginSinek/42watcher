@@ -510,7 +510,7 @@ export default async function handler(
       student: getStudentWithProjects(student.login as string)
     }));
 
-    // Hourly occupancy - 24 saatlik veri (database'den - eski hali geri getirildi)
+    // Hourly occupancy - 24 saatlik veri (database'den - günlük aktif öğrenci sayısından hesaplanıyor)
     const hourlyOccupancyQuery = `
       SELECT months
       FROM ${locationStatsKeyspace}
@@ -527,7 +527,9 @@ export default async function handler(
     // Son 30 günün verilerini kullan
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const hourlyCounts: { [key: number]: number } = {};
+    
+    // Her saat için aktif öğrenci sayısını say
+    const hourlyStudentCounts: { [key: number]: number } = {};
     
     for (const row of hourlyResult.rows as any[]) {
       if (!row.months) continue;
@@ -549,17 +551,17 @@ export default async function handler(
             const parts = duration.split(':');
             const totalSeconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
             
-            // Günlük ortalama süreyi saatlere dağıt (basit bir model)
-            // Hafta içi: 8-18 arası yoğun, hafta sonu: 10-16 arası yoğun
-            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-            const activeHours = isWeekend ? [10, 11, 12, 13, 14, 15, 16] : [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
-            
-            // Her aktif saat için eşit dağıt (basitleştirilmiş model)
-            const secondsPerHour = totalSeconds / activeHours.length;
-            
-            for (let hour = 0; hour < 24; hour++) {
-              if (activeHours.includes(hour)) {
-                hourlyCounts[hour] = (hourlyCounts[hour] || 0) + secondsPerHour;
+            // Eğer öğrenci o gün kampüsteyse (duration > 0), aktif saatlere dağıt
+            if (totalSeconds > 0) {
+              // Hafta içi: 8-18 arası yoğun, hafta sonu: 10-16 arası yoğun
+              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+              const activeHours = isWeekend ? [10, 11, 12, 13, 14, 15, 16] : [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+              
+              // Her aktif saat için öğrenci sayısını artır
+              for (let hour = 0; hour < 24; hour++) {
+                if (activeHours.includes(hour)) {
+                  hourlyStudentCounts[hour] = (hourlyStudentCounts[hour] || 0) + 1;
+                }
               }
             }
           }
@@ -567,12 +569,12 @@ export default async function handler(
       }
     }
 
-    // Normalize et ve formatla
-    const maxHourlyCount = Math.max(...Object.values(hourlyCounts), 1);
+    // Normalize et ve formatla (max 100 olacak şekilde)
+    const maxHourlyCount = Math.max(...Object.values(hourlyStudentCounts), 1);
     const hourlyOccupancy = Array.from({ length: 24 }, (_, i) => {
       const hour = i.toString().padStart(2, '0');
-      const occupancy = hourlyCounts[i] 
-        ? Math.round((hourlyCounts[i] / maxHourlyCount) * 100)
+      const occupancy = hourlyStudentCounts[i] 
+        ? Math.round((hourlyStudentCounts[i] / maxHourlyCount) * 100)
         : 0;
       return { hour: `${hour}:00`, occupancy };
     });
