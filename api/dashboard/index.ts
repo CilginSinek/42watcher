@@ -405,32 +405,32 @@ export default async function handler(
     ]);
 
     // Patronage ve Feedback'leri merge et
-    const studentsWithPatronage = allStudents.map(student => {
-      const patronage = allPatronage.find((p: Record<string, unknown>) => p.login === student.login);
-      const feedbacks = allFeedbacks.filter((f: Record<string, unknown>) => f.login === student.login);
+    const studentsWithPatronage = (allStudents as any[]).map((student: any) => {
+      const patronage = (allPatronage as any[]).find((p: any) => p.login === student.login);
+      const feedbacks = (allFeedbacks as any[]).filter((f: any) => f.login === student.login);
       
       // Feedback metrics hesapla
       let feedbackCount = 0;
-      let avgRating = null;
-      let avgRatingDetails = null;
+      let avgRating: number | null = null;
+      let avgRatingDetails: any = null;
       
       if (feedbacks.length > 0) {
         feedbackCount = feedbacks.length;
         
         // Average rating hesapla
-        const totalRating = feedbacks.reduce((sum: number, f: Record<string, unknown>) => 
-          sum + (f.rating as number || 0), 0);
+        const totalRating = feedbacks.reduce((sum: number, f: any) => 
+          sum + ((f.rating as number) || 0), 0);
         avgRating = totalRating / feedbackCount;
         
         // Average rating details hesapla
-        const totalNice = feedbacks.reduce((sum: number, f: Record<string, unknown>) => 
-          sum + ((f.ratingDetails as Record<string, number>)?.nice || 0), 0);
-        const totalRigorous = feedbacks.reduce((sum: number, f: Record<string, unknown>) => 
-          sum + ((f.ratingDetails as Record<string, number>)?.rigorous || 0), 0);
-        const totalInterested = feedbacks.reduce((sum: number, f: Record<string, unknown>) => 
-          sum + ((f.ratingDetails as Record<string, number>)?.interested || 0), 0);
-        const totalPunctuality = feedbacks.reduce((sum: number, f: Record<string, unknown>) => 
-          sum + ((f.ratingDetails as Record<string, number>)?.punctuality || 0), 0);
+        const totalNice = feedbacks.reduce((sum: number, f: any) => 
+          sum + ((f.ratingDetails as any)?.nice || 0), 0);
+        const totalRigorous = feedbacks.reduce((sum: number, f: any) => 
+          sum + ((f.ratingDetails as any)?.rigorous || 0), 0);
+        const totalInterested = feedbacks.reduce((sum: number, f: any) => 
+          sum + ((f.ratingDetails as any)?.interested || 0), 0);
+        const totalPunctuality = feedbacks.reduce((sum: number, f: any) => 
+          sum + ((f.ratingDetails as any)?.punctuality || 0), 0);
         
         avgRatingDetails = {
           nice: totalNice / feedbackCount,
@@ -441,7 +441,7 @@ export default async function handler(
       }
       
       return {
-        ...student,
+        ...(student as Record<string, unknown>),
         patronage: patronage || null,
         feedbackCount,
         avgRating,
@@ -466,7 +466,7 @@ export default async function handler(
     };
 
     // Top submitters için student bilgilerini merge et
-    const topSubmitters = topProjectSubmitters.map((proj: Record<string, unknown>) => ({
+    const topSubmitters = (topProjectSubmitters as any[]).map((proj: any) => ({
       login: proj._id,
       projectCount: proj.projectCount,
       totalScore: proj.totalScore,
@@ -475,14 +475,14 @@ export default async function handler(
     }));
 
     // Top location stats için student bilgilerini merge et
-    const topLocations = topLocationStats.map((loc: Record<string, unknown>) => ({
+    const topLocations = (topLocationStats as any[]).map((loc: any) => ({
       login: loc.login,
       totalDuration: loc.totalDuration,
       student: getStudentWithProjects(loc.login as string)
     }));
 
     // All time projects için student bilgilerini merge et
-    const allTimeProjectsWithStudents = allTimeProjects.map((proj: Record<string, unknown>) => ({
+    const allTimeProjectsWithStudents = (allTimeProjects as any[]).map((proj: any) => ({
       login: proj._id,
       projectCount: proj.projectCount,
       totalScore: proj.totalScore,
@@ -490,21 +490,21 @@ export default async function handler(
     }));
 
     // All time wallet için student bilgilerini merge et
-    const allTimeWalletFormatted = allTimeWallet.map((student: Record<string, unknown>) => ({
+    const allTimeWalletFormatted = (allTimeWallet as any[]).map((student: any) => ({
       login: student.login,
       wallet: student.wallet,
       student: getStudentWithProjects(student.login as string)
     }));
 
     // All time points için student bilgilerini merge et
-    const allTimePointsFormatted = allTimePoints.map((student: Record<string, unknown>) => ({
+    const allTimePointsFormatted = (allTimePoints as any[]).map((student: any) => ({
       login: student.login,
       correctionPoint: student.correction_point,
       student: getStudentWithProjects(student.login as string)
     }));
 
     // All time levels için student bilgilerini merge et
-    const allTimeLevelsFormatted = allTimeLevels.map((student: Record<string, unknown>) => ({
+    const allTimeLevelsFormatted = (allTimeLevels as any[]).map((student: any) => ({
       login: student.login,
       level: student.level,
       student: getStudentWithProjects(student.login as string)
@@ -548,26 +548,62 @@ export default async function handler(
           const parts = duration.split(':');
           const totalSeconds = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
           
-          // Eğer öğrenci o gün kampüsteyse (duration > 0), aktif saatlere dağıt
+          // Eğer öğrenci o gün kampüsteyse (duration > 0), saatlere yumuşak dağıt
           if (totalSeconds > 0) {
-            // Hafta içi: 8-18 arası yoğun, hafta sonu: 10-16 arası yoğun
+            const totalHours = totalSeconds / 3600;
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-            const activeHours = isWeekend ? [10, 11, 12, 13, 14, 15, 16] : [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
             
-            // Her aktif saat için öğrenci sayısını artır
+            // Ortalama başlangıç ve bitiş saatleri (hafta içi daha erken, hafta sonu daha geç)
+            const startHour = isWeekend ? 9.5 : 8.0;
+            const endHour = isWeekend ? 17.5 : 19.0;
+            
+            // Her saat için olasılık hesapla (normal dağılım benzeri)
             for (let hour = 0; hour < 24; hour++) {
-              if (activeHours.includes(hour)) {
-                if (!hourlyStats[hour]) {
-                  hourlyStats[hour] = { totalStudents: 0, dayCount: 0 };
-                }
-                hourlyStats[hour].totalStudents += 1;
+              if (!hourlyStats[hour]) {
+                hourlyStats[hour] = { totalStudents: 0, dayCount: 0 };
               }
+              
+              // Saatin günün ortasına göre pozisyonu
+              const hourCenter = hour + 0.5;
+              
+              // Günün ortası (başlangıç ve bitişin ortası)
+              const dayCenter = (startHour + endHour) / 2;
+              const daySpan = endHour - startHour;
+              
+              // Saatin aktiflik oranı (daha yumuşak Gaussian benzeri dağılım)
+              let probability = 0;
+              if (hourCenter >= startHour && hourCenter <= endHour) {
+                // Aktif saatler içinde - merkeze yakın olanlar daha yüksek ama daha yumuşak
+                const distanceFromCenter = Math.abs(hourCenter - dayCenter);
+                const maxDistance = daySpan / 2;
+                // Daha yumuşak eğri: merkez %100, kenarlar %50
+                const normalizedDistance = distanceFromCenter / maxDistance;
+                probability = 1 - (normalizedDistance * normalizedDistance * 0.5); // Karesel düşüş
+              } else if (hourCenter < startHour) {
+                // Başlangıçtan önce - daha uzun yumuşak geçiş
+                const distance = startHour - hourCenter;
+                if (distance <= 3) {
+                  // 3 saat öncesine kadar yumuşak geçiş, karesel düşüş
+                  const normalizedDist = distance / 3;
+                  probability = Math.max(0, (1 - normalizedDist * normalizedDist) * 0.6);
+                }
+              } else {
+                // Bitişten sonra - daha uzun yumuşak geçiş
+                const distance = hourCenter - endHour;
+                if (distance <= 3) {
+                  // 3 saat sonrasına kadar yumuşak geçiş, karesel düşüş
+                  const normalizedDist = distance / 3;
+                  probability = Math.max(0, (1 - normalizedDist * normalizedDist) * 0.6);
+                }
+              }
+              
+              // Öğrenci sayısını olasılığa göre ekle
+              hourlyStats[hour].totalStudents += probability;
             }
             
-            // Gün sayısını kaydet (tüm saatler için aynı gün sayısı kullanılacak)
-            // Sadece bir kez say (ilk aktif saatte)
-            if (activeHours.length > 0 && hourlyStats[activeHours[0]]) {
-              hourlyStats[activeHours[0]].dayCount += 1;
+            // Gün sayısını kaydet (tüm saatler için aynı)
+            if (hourlyStats[0]) {
+              hourlyStats[0].dayCount += 1;
             }
           }
         }
@@ -575,8 +611,8 @@ export default async function handler(
     }
 
     // Ortalama hesapla ve formatla (max 100 olacak şekilde)
-    // Tüm saatler için aynı gün sayısını kullan (ilk aktif saatten al)
-    const totalDayCount = Object.values(hourlyStats).find(stats => stats.dayCount > 0)?.dayCount || 1;
+    // Tüm saatler için aynı gün sayısını kullan
+    const totalDayCount = hourlyStats[0]?.dayCount || 1;
     
     const hourlyAverages: { [key: number]: number } = {};
     for (let hour = 0; hour < 24; hour++) {
