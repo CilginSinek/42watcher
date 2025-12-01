@@ -76,7 +76,8 @@ function Students() {
 
   const fetchPools = async () => {
     try {
-      const response = await axios.get('/api/students/pools', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await axios.get(`${apiUrl}/api/students/pools`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setPools(response.data.pools);
@@ -100,7 +101,8 @@ function Students() {
         ...(poolYear && { poolYear })
       });
 
-      const response = await axios.get(`/api/students?${params}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await axios.get(`${apiUrl}/api/students?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStudents(response.data.students);

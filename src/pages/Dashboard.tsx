@@ -62,7 +62,8 @@ function Dashboard() {
         params.append('campusId', campusId);
       }
       
-      const response = await axios.get(`/api/dashboard?${params}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await axios.get(`${apiUrl}/api/dashboard?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setData(response.data);

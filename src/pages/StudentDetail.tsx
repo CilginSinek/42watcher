@@ -70,7 +70,8 @@ function StudentDetail() {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`/api/students/${login}`, {
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const response = await axios.get(`${apiUrl}/api/students/${login}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
