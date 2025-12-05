@@ -166,7 +166,7 @@ function Dashboard() {
           </div>
         ) : data ? (
           <>
-            <h2 className="section-title text-2xl mb-6">📍 Campus Occupancy</h2>
+            {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
               <div className="card">
                 <h3 className="text-lg font-bold mb-6">Weekly Average</h3>
@@ -183,10 +183,7 @@ function Dashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
               <div className="card">
                 <h3 className="text-lg font-bold mb-6">Grade Distribution</h3>
                 {data.gradeDistribution && data.gradeDistribution.length > 0 ? (
