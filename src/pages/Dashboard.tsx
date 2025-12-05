@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { StudentModal } from '../components/StudentModal';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 
 interface Project {
   project: string;
@@ -39,7 +39,6 @@ interface DashboardData {
   allTimePoints: { login: string; correctionPoint: number; student: StudentFull | null }[];
   allTimeLevels: { login: string; level: number; student: StudentFull | null }[];
   gradeDistribution: { name: string; value: number }[];
-  hourlyOccupancy: { hour: string; occupancy: number }[];
   weeklyOccupancy: { day: string; occupancy: number }[];
 }
 
@@ -170,22 +169,6 @@ function Dashboard() {
             <h2 className="section-title text-2xl mb-6">📍 Campus Occupancy</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
               <div className="card">
-                <h3 className="text-lg font-bold mb-6">Hourly Occupancy (24h)</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={data.hourlyOccupancy || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="hour" stroke="var(--text-tertiary)" angle={-45} textAnchor="end" height={80} />
-                    <YAxis stroke="var(--text-tertiary)" />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                      labelStyle={{ color: 'var(--text-primary)' }}
-                    />
-                    <Bar dataKey="occupancy" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="card">
                 <h3 className="text-lg font-bold mb-6">Weekly Average</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={data.weeklyOccupancy || []}>
@@ -204,27 +187,6 @@ function Dashboard() {
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-              <div className="card">
-                <h3 className="text-lg font-bold mb-6">Performance Trend</h3>
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={[
-                    { name: 'Week 1', value: 400 },
-                    { name: 'Week 2', value: 450 },
-                    { name: 'Week 3', value: 380 },
-                    { name: 'Week 4', value: 520 }
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="name" stroke="var(--text-tertiary)" />
-                    <YAxis stroke="var(--text-tertiary)" />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}
-                      labelStyle={{ color: 'var(--text-primary)' }}
-                    />
-                    <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-
               <div className="card">
                 <h3 className="text-lg font-bold mb-6">Grade Distribution</h3>
                 {data.gradeDistribution && data.gradeDistribution.length > 0 ? (

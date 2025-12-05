@@ -291,6 +291,7 @@ function Students() {
                 <option value="wallet">Wallet</option>
                 <option value="project_count">Project Count</option>
                 <option value="cheat_count">Cheat Count</option>
+                <option value="cheat_date">Cheat Date</option>
                 <option value="godfather_count">Godfather Count</option>
                 <option value="children_count">Children Count</option>
                 <option value="log_time">Log Time</option>
