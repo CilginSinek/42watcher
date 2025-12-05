@@ -46,10 +46,6 @@ interface PaginationInfo {
   totalPages: number;
 }
 
-interface ProjectName {
-  name: string;
-}
-
 function Reviews() {
   const { user, logout, token } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -68,7 +64,7 @@ function Reviews() {
   const [dateTo, setDateTo] = useState('');
   
   const [statuses, setStatuses] = useState<string[]>([]);
-  const [projectNames, setProjectNames] = useState<ProjectName[]>([]);
+  const [projectNames, setProjectNames] = useState<string[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
     page: 1,
@@ -247,8 +243,8 @@ function Reviews() {
                   className="input py-2 text-sm w-full"
                 />
                 <datalist id="project-names">
-                  {projectNames.map((p) => (
-                    <option key={p.name} value={p.name} />
+                  {projectNames.map((p, index) => (
+                    <option key={index} value={p} />
                   ))}
                 </datalist>
               </div>
