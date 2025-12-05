@@ -20,8 +20,8 @@ const Callback = () => {
     const exchangeCodeForToken = async () => {
       try {
         const response = await axios.post('/api/auth/callback', { code });
-        const { access_token } = response.data;
-        localStorage.setItem('42_access_token', access_token);
+        const { sessionToken } = response.data;
+        localStorage.setItem('42_access_token', sessionToken);
         
         setTimeout(() => {
           navigate('/', { replace: true });
