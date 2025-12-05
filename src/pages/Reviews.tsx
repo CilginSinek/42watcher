@@ -63,6 +63,7 @@ function Reviews() {
   
   // Filters
   const [projectName, setProjectName] = useState('');
+  const [campusId, setCampusId] = useState('');
   const [evaluatorLogin, setEvaluatorLogin] = useState('');
   const [evaluatedLogin, setEvaluatedLogin] = useState('');
   const [score, setScore] = useState('');
@@ -106,6 +107,7 @@ function Reviews() {
         limit: pagination.limit.toString(),
         ...(search && { search }),
         ...(projectName && { projectName }),
+        ...(campusId && { campusId }),
         ...(evaluatorLogin && { evaluatorLogin }),
         ...(evaluatedLogin && { evaluatedLogin }),
         ...(score && { score }),
@@ -150,6 +152,7 @@ function Reviews() {
   const handleReset = () => {
     setSearch('');
     setProjectName('');
+    setCampusId('');
     setEvaluatorLogin('');
     setEvaluatedLogin('');
     setScore('');
@@ -237,16 +240,21 @@ function Reviews() {
 
             {/* Detailed Filters */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <select
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                className="input py-2 text-sm"
-              >
-                <option value="">All Projects</option>
-                {projectNames.map((p) => (
-                  <option key={p.name} value={p.name}>{p.name}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Project Name"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  list="project-names"
+                  className="input py-2 text-sm w-full"
+                />
+                <datalist id="project-names">
+                  {projectNames.map((p) => (
+                    <option key={p.name} value={p.name} />
+                  ))}
+                </datalist>
+              </div>
               
               <input
                 type="text"
@@ -264,9 +272,19 @@ function Reviews() {
                 className="input py-2 text-sm"
               />
 
+              <select
+                value={campusId}
+                onChange={(e) => setCampusId(e.target.value)}
+                className="input py-2 text-sm"
+              >
+                <option value="">All Campuses</option>
+                <option value="49">Istanbul (49)</option>
+                <option value="50">Kocaeli (50)</option>
+              </select>
+
               <input
                 type="number"
-                placeholder="Minimum Score"
+                placeholder="Score (e.g. 100, 75, 0)"
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
                 className="input py-2 text-sm"
@@ -278,8 +296,10 @@ function Reviews() {
                 className="input py-2 text-sm"
               >
                 <option value="">All Statuses</option>
-                {statuses.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
+                {statuses.map((s, index) => (
+                  <option key={`${s.value}-${index}`} value={s.value}>
+                    {s.label || s.value}
+                  </option>
                 ))}
               </select>
 
