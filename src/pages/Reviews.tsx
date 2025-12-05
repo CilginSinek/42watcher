@@ -87,7 +87,7 @@ function Reviews() {
           headers: { Authorization: `Bearer ${token}` },
         })
       ]);
-      setStatuses(statusesRes.data || []);
+      setStatuses(statusesRes.data.statuses || []);
       setProjectNames(projectsRes.data || []);
     } catch (error) {
       console.error('Error fetching metadata:', error);
