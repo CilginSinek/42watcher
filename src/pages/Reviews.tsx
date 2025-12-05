@@ -46,11 +46,6 @@ interface PaginationInfo {
   totalPages: number;
 }
 
-interface ProjectStatus {
-  value: string;
-  label: string;
-}
-
 interface ProjectName {
   name: string;
 }
@@ -72,7 +67,7 @@ function Reviews() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   
-  const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
+  const [statuses, setStatuses] = useState<string[]>([]);
   const [projectNames, setProjectNames] = useState<ProjectName[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
@@ -92,8 +87,8 @@ function Reviews() {
           headers: { Authorization: `Bearer ${token}` },
         })
       ]);
-      setStatuses(statusesRes.data.statuses || []);
-      setProjectNames(projectsRes.data.projectNames || []);
+      setStatuses(statusesRes.data || []);
+      setProjectNames(projectsRes.data || []);
     } catch (error) {
       console.error('Error fetching metadata:', error);
     }
@@ -297,8 +292,8 @@ function Reviews() {
               >
                 <option value="">All Statuses</option>
                 {statuses.map((s, index) => (
-                  <option key={`${s.value}-${index}`} value={s.value}>
-                    {s.label || s.value}
+                  <option key={index} value={s}>
+                    {s.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
                   </option>
                 ))}
               </select>
