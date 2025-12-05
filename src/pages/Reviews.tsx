@@ -88,7 +88,9 @@ function Reviews() {
         })
       ]);
       setStatuses(statusesRes.data.statuses || []);
-      setProjectNames(projectsRes.data || []);
+      setProjectNames(projectsRes.data.projectNames || []);
+      console.log('Statuses:', statusesRes.data);
+      console.log('Project Names:', projectsRes.data);
     } catch (error) {
       console.error('Error fetching metadata:', error);
     }
