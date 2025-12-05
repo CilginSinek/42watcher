@@ -194,6 +194,7 @@ function Students() {
               <nav className="flex items-center gap-6 text-sm sm:text-base">
                 <Link to="/dashboard" className="text-(--text-secondary) hover:text-(--text-primary) transition pb-1">Dashboard</Link>
                 <Link to="/students" className="text-(--primary) border-b-2 border-(--primary) pb-1">Students</Link>
+                <Link to="/reviews" className="text-(--text-secondary) hover:text-(--text-primary) transition pb-1">Reviews</Link>
               </nav>
             </div>
 

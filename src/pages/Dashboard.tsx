@@ -124,6 +124,7 @@ function Dashboard() {
               <nav className="flex items-center gap-6 ml-8">
                 <Link to="/dashboard" className="text-(--primary) border-b-2 border-(--primary) pb-1">Dashboard</Link>
                 <Link to="/students" className="text-(--text-secondary) hover:text-(--text-primary) transition pb-1">Students</Link>
+                <Link to="/reviews" className="text-(--text-secondary) hover:text-(--text-primary) transition pb-1">Reviews</Link>
               </nav>
             </div>
 

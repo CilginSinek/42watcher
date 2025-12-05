@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import Students from './pages/Students'
 import StudentDetail from './pages/StudentDetail'
+import Reviews from './pages/Reviews'
 import Login from './pages/Login'
 import Callback from './pages/Callback'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -33,6 +34,14 @@ function App() {
         element={
           <ProtectedRoute>
             <StudentDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reviews"
+        element={
+          <ProtectedRoute>
+            <Reviews />
           </ProtectedRoute>
         }
       />
