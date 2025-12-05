@@ -51,11 +51,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      if(localStorage.getItem('isWarned') !== 'true') {
-        alert('Ücretsiz veritabanı bulamadığımdan dolayı uygulama düzgün ve güncel verilerle çalışmayabilir. Lütfen bu durumu göz önünde bulundurun. Önerilerinizi mail üzerinden iletebilirsiniz: ismailhand@proton.me');
-        localStorage.setItem('isWarned', 'true');
-      }
-    </script>
   </body>
 </html>

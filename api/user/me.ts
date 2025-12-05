@@ -1,4 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import connectDB from '../lib/mongodb.js';
+import { Session } from '../models/Session.js';
 
 export default async function handler(
   req: VercelRequest,
@@ -28,27 +30,37 @@ export default async function handler(
     return res.status(401).json({ error: 'Authorization token required' });
   }
 
-  const token = authHeader.split(' ')[1];
+  const sessionToken = authHeader.split(' ')[1];
 
   try {
-    const response = await fetch('https://api.intra.42.fr/v2/me', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    await connectDB();
 
-    const data = await response.json();
+    // Find session
+    const session = await Session.findOne({ sessionToken });
 
-    if (!response.ok) {
-      console.error('42 API Error:', data);
-      return res.status(response.status).json({ 
-        error: 'Failed to fetch user data',
-        details: data 
-      });
+    if (!session) {
+      return res.status(401).json({ error: 'Invalid or expired session' });
     }
 
-    return res.status(200).json(data);
+    // Check if session is expired
+    if (new Date() > session.expiresAt) {
+      await Session.deleteOne({ sessionToken });
+      return res.status(401).json({ error: 'Session expired' });
+    }
+
+    // Update last activity
+    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || 
+                     (req.headers['x-real-ip'] as string) || 
+                     'unknown';
+    
+    if (!session.usedIps.includes(clientIp)) {
+      session.usedIps.push(clientIp);
+    }
+    session.lastActivity = new Date();
+    await session.save();
+
+    // Return cached user data from session
+    return res.status(200).json(session.userData);
   } catch (error) {
     console.error('Error fetching user data:', error);
     return res.status(500).json({ 
