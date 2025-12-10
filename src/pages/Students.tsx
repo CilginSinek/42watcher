@@ -202,7 +202,7 @@ function Students() {
               <ThemeToggle />
               {user && (
                 <div className="flex items-center gap-3 text-sm sm:text-base">
-                  <img src={user.image.link || "/placeholder.svg"} alt={user.login} className="w-8 h-8 rounded-full object-cover" />
+                  <img src={user.image?.link || "/placeholder.svg"} alt={user.login} className="w-8 h-8 rounded-full object-cover" />
                   <span className="text-(--text-secondary) hidden sm:inline">{user.login}</span>
                   <button onClick={logout} className="btn-secondary py-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
                     Logout
@@ -431,7 +431,20 @@ function Students() {
 
       {/* Footer */}
       <footer style={{ borderColor: 'var(--border)' }} className="border-t mt-8 sm:mt-12">
-        <div className="max-w-7xl mx-auto px-4 py-6 text-center text-(--text-tertiary) text-xs sm:text-sm">
+        <div className="max-w-7xl mx-auto px-4 py-6 text-center text-(--text-tertiary) text-xs sm:text-sm space-y-3">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+            <Link to="/privacy-policy" className="hover:text-(--primary) transition">Gizlilik Politikası</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/kvkk" className="hover:text-(--primary) transition">KVKK</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/cookie-policy" className="hover:text-(--primary) transition">Çerez Politikası</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/terms" className="hover:text-(--primary) transition">Kullanım Koşulları</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/disclaimer" className="hover:text-(--primary) transition">Yasal Uyarı</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/contact" className="hover:text-(--primary) transition">İletişim</Link>
+          </div>
           <p>Made with by <a href="https://sinek.dev" target="_blank" rel="noopener noreferrer" className="text-(--primary) hover:opacity-80">sinek.dev</a></p>
         </div>
       </footer>

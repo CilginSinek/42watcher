@@ -5,6 +5,12 @@ import StudentDetail from './pages/StudentDetail'
 import Reviews from './pages/Reviews'
 import Login from './pages/Login'
 import Callback from './pages/Callback'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import KVKK from './pages/KVKK'
+import CookiePolicy from './pages/CookiePolicy'
+import TermsOfUse from './pages/TermsOfUse'
+import Disclaimer from './pages/Disclaimer'
+import Contact from './pages/Contact'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -45,6 +51,12 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/kvkk" element={<KVKK />} />
+      <Route path="/cookie-policy" element={<CookiePolicy />} />
+      <Route path="/terms" element={<TermsOfUse />} />
+      <Route path="/disclaimer" element={<Disclaimer />} />
+      <Route path="/contact" element={<Contact />} />
     </Routes>
   )
 }

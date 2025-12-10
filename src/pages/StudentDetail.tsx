@@ -600,7 +600,20 @@ function StudentDetail() {
 
       {/* Footer */}
       <footer style={{ borderColor: 'var(--border)' }} className="border-t mt-12">
-        <div className="max-w-5xl mx-auto px-4 py-6 text-center text-(--text-tertiary) text-sm">
+        <div className="max-w-5xl mx-auto px-4 py-6 text-center text-(--text-tertiary) text-sm space-y-3">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+            <Link to="/privacy-policy" className="hover:text-(--primary) transition">Gizlilik Politikası</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/kvkk" className="hover:text-(--primary) transition">KVKK</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/cookie-policy" className="hover:text-(--primary) transition">Çerez Politikası</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/terms" className="hover:text-(--primary) transition">Kullanım Koşulları</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/disclaimer" className="hover:text-(--primary) transition">Yasal Uyarı</Link>
+            <span className="hidden sm:inline">•</span>
+            <Link to="/contact" className="hover:text-(--primary) transition">İletişim</Link>
+          </div>
           <p>Made with by <a href="https://sinek.dev" target="_blank" rel="noopener noreferrer" className="text-(--primary) hover:opacity-80">sinek.dev</a></p>
         </div>
       </footer>
