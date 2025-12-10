@@ -127,7 +127,7 @@ function Dashboard() {
               </nav>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 md:flex-nowrap sm:flex-nowrap">
               <select
                 value={campusId}
                 onChange={(e) => setCampusId(e.target.value)}
