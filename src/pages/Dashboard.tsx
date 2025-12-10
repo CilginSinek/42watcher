@@ -146,9 +146,10 @@ function Dashboard() {
                   <span className="text-(--text-secondary) text-sm hidden sm:inline">{user.login}</span>
                   <button
                     onClick={logout}
-                    className="btn-secondary py-1 px-3 text-sm"
+                    className="btn-secondary py-2 px-2 text-sm"
+                    title="Logout"
                   >
-                    Logout
+                    ⏻
                   </button>
                 </div>
               )}
