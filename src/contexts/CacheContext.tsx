@@ -14,6 +14,9 @@ interface CacheContextType {
   reviewsCache: Record<string, unknown>;
   setReviewsCache: (key: string, data: unknown) => void;
   getReviewsCache: (key: string) => unknown;
+  reviewsFilters: unknown;
+  setReviewsFilters: (filters: unknown) => void;
+  getReviewsFilters: () => unknown;
   clearCache: () => void;
 }
 
@@ -25,6 +28,7 @@ export function CacheProvider({ children }: { children: ReactNode }) {
   const [studentsCache, setStudentsCacheState] = useState<Record<string, unknown>>({});
   const [studentsFilters, setStudentsFiltersState] = useState<unknown>(null);
   const [reviewsCache, setReviewsCacheState] = useState<Record<string, unknown>>({});
+  const [reviewsFilters, setReviewsFiltersState] = useState<unknown>(null);
 
   const setDashboardCache = (campusId: string, data: unknown) => {
     setDashboardCacheState(prev => ({ ...prev, [campusId]: data }));
@@ -58,11 +62,20 @@ export function CacheProvider({ children }: { children: ReactNode }) {
     return reviewsCache[key];
   };
 
+  const setReviewsFilters = (filters: unknown) => {
+    setReviewsFiltersState(filters);
+  };
+
+  const getReviewsFilters = () => {
+    return reviewsFilters;
+  };
+
   const clearCache = () => {
     setDashboardCacheState({});
     setStudentsCacheState({});
     setStudentsFiltersState(null);
     setReviewsCacheState({});
+    setReviewsFiltersState(null);
   };
 
   return (
@@ -80,6 +93,9 @@ export function CacheProvider({ children }: { children: ReactNode }) {
         reviewsCache,
         setReviewsCache,
         getReviewsCache,
+        reviewsFilters,
+        setReviewsFilters,
+        getReviewsFilters,
         clearCache,
       }}
     >

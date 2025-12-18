@@ -49,7 +49,7 @@ interface PaginationInfo {
 
 function Reviews() {
   const { user, logout, token } = useAuth();
-  const { getReviewsCache, setReviewsCache } = useCache();
+  const { getReviewsCache, setReviewsCache, getReviewsFilters, setReviewsFilters } = useCache();
   const navigate = useNavigate();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +74,42 @@ function Reviews() {
     limit: 50,
     totalPages: 0
   });
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initial load - cache'den filtreleri yükle (sadece mount'ta bir kez)
+  useEffect(() => {
+    if (isInitialized) return;
+
+    const cached = getReviewsFilters() as {
+      search?: string;
+      projectName?: string;
+      campusId?: string;
+      evaluatorLogin?: string;
+      evaluatedLogin?: string;
+      score?: string;
+      status?: string;
+      dateFilter?: 'after' | 'before' | 'between';
+      dateFrom?: string;
+      dateTo?: string;
+      page?: number;
+    } | null;
+
+    if (cached) {
+      if (cached.search) setSearch(cached.search);
+      if (cached.projectName) setProjectName(cached.projectName);
+      if (cached.campusId) setCampusId(cached.campusId);
+      if (cached.evaluatorLogin) setEvaluatorLogin(cached.evaluatorLogin);
+      if (cached.evaluatedLogin) setEvaluatedLogin(cached.evaluatedLogin);
+      if (cached.score) setScore(cached.score);
+      if (cached.status) setStatus(cached.status);
+      if (cached.dateFilter) setDateFilter(cached.dateFilter);
+      if (cached.dateFrom) setDateFrom(cached.dateFrom);
+      if (cached.dateTo) setDateTo(cached.dateTo);
+      if (cached.page) setPagination(prev => ({ ...prev, page: cached.page || 1 }));
+    }
+    setIsInitialized(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getCacheKey = () => {
     return `${search}-${projectName}-${campusId}-${evaluatorLogin}-${evaluatedLogin}-${score}-${status}-${dateFilter}-${dateFrom}-${dateTo}-${pagination.page}`;
@@ -128,7 +164,11 @@ function Reviews() {
       });
       
       setReviews(response.data.reviews || []);
-      setPagination(response.data.pagination);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.pagination.total,
+        totalPages: response.data.pagination.totalPages
+      }));
       setReviewsCache(getCacheKey(), response.data);
     } catch (error: unknown) {
       const err = error as { response?: { status: number; data?: { message?: string } } };
@@ -148,8 +188,28 @@ function Reviews() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  // Filtreleri cache'e kaydet
   useEffect(() => {
-    if (!token) return;
+    if (!isInitialized) return;
+    
+    setReviewsFilters({
+      search,
+      projectName,
+      campusId,
+      evaluatorLogin,
+      evaluatedLogin,
+      score,
+      status,
+      dateFilter,
+      dateFrom,
+      dateTo,
+      page: pagination.page
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, projectName, campusId, evaluatorLogin, evaluatedLogin, score, status, dateFilter, dateFrom, dateTo, pagination.page, isInitialized]);
+
+  useEffect(() => {
+    if (!token || !isInitialized) return;
     
     const cacheKey = getCacheKey();
     const cachedData = getReviewsCache(cacheKey);
@@ -157,18 +217,22 @@ function Reviews() {
     if (cachedData) {
       const cached = cachedData as { reviews: Review[]; pagination: PaginationInfo };
       setReviews(cached.reviews || []);
-      setPagination(cached.pagination);
+      setPagination(prev => ({
+        ...prev,
+        total: cached.pagination.total,
+        totalPages: cached.pagination.totalPages
+      }));
       setLoading(false);
     } else {
       fetchReviews();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, token]);
+  }, [token, isInitialized, search, projectName, campusId, evaluatorLogin, evaluatedLogin, score, status, dateFilter, dateFrom, dateTo, pagination.page]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPagination(prev => ({ ...prev, page: 1 }));
-    fetchReviews();
+    // useEffect otomatik olarak tetiklenecek
   };
 
   const handleReset = () => {
@@ -225,7 +289,7 @@ function Reviews() {
               <ThemeToggle />
               {user && (
                 <div className="flex items-center gap-3 text-sm sm:text-base">
-                  <img src={user.image.link || "/placeholder.svg"} alt={user.login} className="w-8 h-8 rounded-full object-cover" />
+                  <img src={user.image?.link || "/placeholder.svg"} alt={user.login} className="w-8 h-8 rounded-full object-cover" />
                   <span className="text-(--text-secondary) hidden sm:inline">{user.login}</span>
                   <button onClick={logout} className="btn-secondary py-1 px-2 sm:px-3 text-xs sm:text-sm whitespace-nowrap">
                     Logout

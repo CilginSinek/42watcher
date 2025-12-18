@@ -131,6 +131,8 @@ function Students() {
 
   // Filtreleri cache'e kaydet
   useEffect(() => {
+    if (!isInitialized) return;
+    
     setStudentsFilters({
       search,
       status,
@@ -141,7 +143,8 @@ function Students() {
       order,
       page: pagination.page
     });
-  }, [search, status, campusId, poolMonth, poolYear, sortBy, order, pagination.page, setStudentsFilters]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, status, campusId, poolMonth, poolYear, sortBy, order, pagination.page, isInitialized]);
 
   // Students verisini yükle
   useEffect(() => {
