@@ -77,8 +77,10 @@ function Students() {
   });
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initial load - cache'den filtreleri yükle
+  // Initial load - cache'den filtreleri yükle (sadece mount'ta bir kez)
   useEffect(() => {
+    if (isInitialized) return;
+
     const cached = getStudentsFilters() as {
       search?: string;
       status?: string;
@@ -90,7 +92,7 @@ function Students() {
       page?: number;
     } | null;
 
-    if (cached && !isInitialized) {
+    if (cached) {
       if (cached.search) setSearch(cached.search);
       if (cached.status) setStatus(cached.status);
       if (cached.campusId) setCampusId(cached.campusId);
@@ -99,11 +101,10 @@ function Students() {
       if (cached.sortBy) setSortBy(cached.sortBy);
       if (cached.order) setOrder(cached.order);
       if (cached.page) setPagination(prev => ({ ...prev, page: cached.page || 1 }));
-      setIsInitialized(true);
-    } else if (!isInitialized) {
-      setIsInitialized(true);
     }
-  }, [getStudentsFilters, isInitialized]);
+    setIsInitialized(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchPools = async () => {
     try {
