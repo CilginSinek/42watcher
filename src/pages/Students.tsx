@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCache } from '../contexts/useCache';
 import { Link, useNavigate } from 'react-router-dom';
@@ -117,48 +117,6 @@ function Students() {
     }
   };
 
-  const getCacheKey = useCallback(() => {
-    return `${campusId}-${status}-${poolMonth}-${poolYear}-${sortBy}-${order}-${search}-${pagination.page}`;
-  }, [campusId, status, poolMonth, poolYear, sortBy, order, search, pagination.page]);
-
-  const fetchStudents = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        sortBy,
-        order,
-        ...(search && { search }),
-        ...(status !== 'all' && { status }),
-        ...(campusId !== 'all' && { campusId }),
-        ...(poolMonth && { poolMonth }),
-        ...(poolYear && { poolYear })
-      });
-
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-      const response = await axios.get(`${apiUrl}/api/students?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStudents(response.data.students);
-      setPagination(response.data.pagination);
-      setStudentsCache(getCacheKey(), response.data);
-      setError(null);
-    } catch (error: unknown) {
-      const err = error as { response?: { status: number; data?: { message?: string } }; message?: string };
-      if (err.response?.status === 403 && err.response?.data?.message?.includes('banned')) {
-        const reason = err.response.data.message.replace('User is banned: ', '').replace('User is banned', '');
-        navigate('/banned', { state: { reason } });
-      } else {
-        const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch students';
-        setError(errorMessage);
-        console.error('Error fetching students:', error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.limit, sortBy, order, search, status, campusId, poolMonth, poolYear, token, getCacheKey, setStudentsCache, navigate]);
-
   useEffect(() => {
     if (!token) return;
     fetchPools();
@@ -179,21 +137,61 @@ function Students() {
     });
   }, [search, status, campusId, poolMonth, poolYear, sortBy, order, pagination.page, setStudentsFilters]);
 
+  // Students verisini yükle
   useEffect(() => {
     if (!token) return;
-    
-    const cacheKey = getCacheKey();
-    const cachedData = getStudentsCache(cacheKey);
-    
-    if (cachedData) {
-      const cached = cachedData as { students: Student[]; pagination: PaginationInfo };
-      setStudents(cached.students);
-      setPagination(cached.pagination);
-      setLoading(false);
-    } else {
-      fetchStudents();
-    }
-  }, [token, getCacheKey, getStudentsCache, fetchStudents]);
+
+    const fetchData = async () => {
+      const cacheKey = `${campusId}-${status}-${poolMonth}-${poolYear}-${sortBy}-${order}-${search}-${pagination.page}`;
+      const cachedData = getStudentsCache(cacheKey);
+      
+      if (cachedData) {
+        const cached = cachedData as { students: Student[]; pagination: PaginationInfo };
+        setStudents(cached.students);
+        setPagination(cached.pagination);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page: pagination.page.toString(),
+          limit: pagination.limit.toString(),
+          sortBy,
+          order,
+          ...(search && { search }),
+          ...(status !== 'all' && { status }),
+          ...(campusId !== 'all' && { campusId }),
+          ...(poolMonth && { poolMonth }),
+          ...(poolYear && { poolYear })
+        });
+
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const response = await axios.get(`${apiUrl}/api/students?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setStudents(response.data.students);
+        setPagination(response.data.pagination);
+        setStudentsCache(cacheKey, response.data);
+        setError(null);
+      } catch (error: unknown) {
+        const err = error as { response?: { status: number; data?: { message?: string } }; message?: string };
+        if (err.response?.status === 403 && err.response?.data?.message?.includes('banned')) {
+          const reason = err.response.data.message.replace('User is banned: ', '').replace('User is banned', '');
+          navigate('/banned', { state: { reason } });
+        } else {
+          const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch students';
+          setError(errorMessage);
+          console.error('Error fetching students:', error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [token, campusId, status, poolMonth, poolYear, sortBy, order, search, pagination.page, pagination.limit, getStudentsCache, setStudentsCache, navigate]);
 
   // Scroll pozisyonunu restore et
   useEffect(() => {
@@ -209,7 +207,7 @@ function Students() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPagination(prev => ({ ...prev, page: 1 }));
-    fetchStudents();
+    // useEffect otomatik olarak tetiklenecek
   };
 
   const handlePoolChange = (value: string) => {
@@ -409,7 +407,7 @@ function Students() {
             <div className="text-6xl mb-4">⚠️</div>
             <p className="text-red-500 font-semibold text-lg mb-2">Error Loading Students</p>
             <p className="text-(--text-secondary) text-sm mb-4">{error}</p>
-            <button onClick={fetchStudents} className="btn-primary px-6 py-2">
+            <button onClick={() => window.location.reload()} className="btn-primary px-6 py-2">
               Retry
             </button>
           </div>
