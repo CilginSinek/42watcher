@@ -55,6 +55,27 @@ const getSafeImageUrl = (url: string): string => {
   }
 };
 
+// Helper function to sanitize text content to prevent XSS
+const sanitizeText = (text: string | number | undefined | null): string => {
+  if (text === null || text === undefined) return '';
+  
+  const textStr = String(text);
+  
+  // Remove any HTML tags and escape special characters
+  return textStr
+    .replace(/[<>]/g, '') // Remove < and > to prevent HTML injection
+    .replace(/[&"']/g, (char) => {
+      const escapeMap: { [key: string]: string } = {
+        '&': '&amp;',
+        '"': '&quot;',
+        "'": '&#x27;'
+      };
+      return escapeMap[char] || char;
+    })
+    .trim()
+    .slice(0, 200); // Limit length to prevent DOS
+};
+
 export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
   const navigate = useNavigate();
 
@@ -67,6 +88,8 @@ export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
 
   const safeLogin = isValidLogin(student.login) ? student.login : null;
   const safeImageUrl = getSafeImageUrl(student.image.link);
+  const safeDisplayName = sanitizeText(student.displayname);
+  const safeLoginText = sanitizeText(student.login);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -88,7 +111,7 @@ export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
         <div className="flex gap-4 mb-6 flex-col sm:flex-row">
           <img
             src={safeImageUrl}
-            alt={student.login}
+            alt={safeLoginText}
             className="w-16 h-16 rounded-lg object-cover shrink-0"
           />
           <div className="flex-1 min-w-0">
@@ -99,14 +122,14 @@ export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
                 rel="noopener noreferrer"
                 className="text-lg font-bold text-(--primary) hover:opacity-80 transition block truncate"
               >
-                {student.displayname}
+                {safeDisplayName}
               </a>
             ) : (
               <span className="text-lg font-bold text-(--text-primary) block truncate">
-                {student.displayname}
+                {safeDisplayName}
               </span>
             )}
-            <p className="text-(--text-secondary) text-sm truncate">@{student.login}</p>
+            <p className="text-(--text-secondary) text-sm truncate">@{safeLoginText}</p>
           </div>
         </div>
 
@@ -132,12 +155,12 @@ export function StudentModal({ isOpen, student, onClose }: StudentModalProps) {
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {student.projects.slice(0, 5).map((project, idx) => (
                 <div key={idx} style={{ backgroundColor: 'var(--bg-input)' }} className="p-3 rounded-lg flex justify-between items-center text-sm">
-                  <span className="text-(--text-secondary)">{project.project}</span>
+                  <span className="text-(--text-secondary)">{sanitizeText(project.project)}</span>
                   <div className="text-(--text-primary) font-medium text-right">
                     <div className={project.score >= 80 ? 'text-green-500' : project.score >= 60 ? 'text-yellow-500' : 'text-red-500'}>
-                      {project.score}%
+                      {sanitizeText(project.score)}%
                     </div>
-                    <div className="text-(--text-tertiary) text-xs">{new Date(project.date).toLocaleDateString()}</div>
+                    <div className="text-(--text-tertiary) text-xs">{sanitizeText(project.status)}</div>
                   </div>
                 </div>
               ))}
