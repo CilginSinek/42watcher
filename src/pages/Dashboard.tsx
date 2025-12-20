@@ -187,7 +187,7 @@ function Dashboard() {
                     <div className="text-4xl">🎁</div>
                     <div>
                       <h3 className="text-lg font-bold text-(--text-primary) mb-1">
-                        Your 2024 Wrapped is Ready!
+                        Your 2025 Wrapped is Ready!
                       </h3>
                       <p className="text-(--text-secondary) text-sm">
                         Check out your year in review and see your achievements

@@ -323,7 +323,7 @@ function StudentDetail() {
                     style={{ background: 'linear-gradient(to right, rgb(168, 85, 247), rgb(236, 72, 153))' }}
                     className="mt-2 ml-2 inline-block text-white px-4 py-2 rounded-lg hover:opacity-90 font-medium transition text-sm md:text-base"
                   >
-                    🎁 2024 Wrapped
+                    🎁 2025 Wrapped
                   </button>
                 </div>
                 <div className="flex gap-2 flex-wrap justify-start md:justify-end w-full md:w-auto">
