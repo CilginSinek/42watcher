@@ -6,6 +6,7 @@ import axios from 'axios';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { StudentModal } from '../components/StudentModal';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import Snowfall from 'react-snowfall';
 
 interface Project {
   project: string;
@@ -118,6 +119,7 @@ function Dashboard() {
 
   return (
     <div style={{ backgroundColor: 'var(--bg-primary)' }} className="min-h-screen transition-colors duration-300">
+      <Snowfall style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: 9999 }} />
       {/* Header */}
       <header style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-secondary)' }} className="border-b backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">

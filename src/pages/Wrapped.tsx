@@ -661,6 +661,11 @@ function Wrapped() {
     const [isAnimating, setIsAnimating] = useState(false);
     const summaryRef = useRef<HTMLDivElement>(null);
 
+    // Swipe handling
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    const minSwipeDistance = 50;
+
     useEffect(() => {
         const fetchWrapped = async () => {
             setLoading(true);
@@ -822,6 +827,35 @@ function Wrapped() {
         setCurrentSlide(index);
         setTimeout(() => setIsAnimating(false), 500);
     };
+
+    // Swipe handlers
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe) {
+            // Swipe left = next slide
+            goToSlide(currentSlide + 1);
+        } else if (isRightSwipe) {
+            // Swipe right = previous slide
+            goToSlide(currentSlide - 1);
+        }
+
+        setTouchStart(null);
+        setTouchEnd(null);
+    };
+
     if (loading) {
         return (
             <div style={{ backgroundColor: 'var(--bg-primary)' }} className="min-h-screen flex items-center justify-center">
@@ -856,8 +890,13 @@ function Wrapped() {
             style={{ backgroundColor: 'var(--bg-primary)' }}
             className="min-h-screen flex flex-col overflow-hidden"
         >
-            {/* Slide Container */}
-            <div className="flex-1 relative overflow-hidden">
+            {/* Slide Container with swipe support */}
+            <div
+                className="flex-1 relative overflow-hidden"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+            >
                 {slides.map((slide, index) => (
                     <div
                         key={index}

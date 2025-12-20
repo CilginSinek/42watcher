@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
+import Snowfall from 'react-snowfall';
 
 interface Student {
   id: number;
@@ -101,6 +102,7 @@ function StudentDetail() {
   if (loading) {
     return (
       <div style={{ backgroundColor: 'var(--bg-primary)' }} className="min-h-screen flex items-center justify-center transition-colors duration-300">
+        <Snowfall style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: 9999 }} />
         <div className="flex flex-col items-center">
           <div className="w-12 h-12 rounded-full border-3 border-(--primary) border-t-transparent animate-spin mb-4"></div>
           <p className="text-(--text-secondary)">Loading student profile...</p>
@@ -112,6 +114,7 @@ function StudentDetail() {
   if (error || !student) {
     return (
       <div style={{ backgroundColor: 'var(--bg-primary)' }} className="min-h-screen flex items-center justify-center p-4 transition-colors duration-300">
+        <Snowfall style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: 9999 }} />
         <div className="card max-w-md w-full text-center">
           <div className="text-5xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-(--text-primary) mb-2">Student Not Found</h2>
@@ -254,6 +257,7 @@ function StudentDetail() {
 
   return (
     <div style={{ backgroundColor: 'var(--bg-primary)' }} className="min-h-screen transition-colors duration-300">
+      <Snowfall style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: 9999 }} />
       {/* Header */}
       <header style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-secondary)' }} className="bg-white border-b sticky top-0 z-40 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
