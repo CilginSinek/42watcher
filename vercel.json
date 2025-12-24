@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/students",
+      "destination": "/api/students/index"
+    },
+    {
+      "source": "/api/students/:login",
+      "destination": "/api/students/[login]"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },
