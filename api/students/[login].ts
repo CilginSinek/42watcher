@@ -177,40 +177,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Handle action=wrapped
         if (req.query.action === 'wrapped') {
-            const ProjectReview = getProjectReviewModel();
-            const year2025Start = '2025-01-01T00:00:00.000Z'; const year2025End = '2025-12-31T23:59:59.999Z';
-
-            const [projects, projectReviews, feedbacksData, projectReviewsReceived, feedbacksReceived, patronage, projectReviewsForWords, feedbacksForWords] = await Promise.all([
-                Project.find({ login: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
-                ProjectReview.find({ evaluator: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
-                Feedback.find({ evaluator: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
-                ProjectReview.find({ evaluated: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
-                Feedback.find({ evaluated: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
-                Patronage.findOne({ login: validatedLogin }).lean(),
-                ProjectReview.find({ evaluator: validatedLogin, date: { $gte: year2025Start, $lte: year2025End }, comment: { $exists: true, $nin: [null, ''] } }, { comment: 1, _id: 0 }).lean(),
-                Feedback.find({ evaluated: validatedLogin, date: { $gte: year2025Start, $lte: year2025End }, comment: { $exists: true, $nin: [null, ''] } }, { comment: 1, _id: 0 }).lean()
-            ]);
-
-            const wrappedData = generateWrappedSummary({
-                student: { pool_year: studentData.pool_year as string, login: studentData.login as string, displayname: studentData.displayname as string, image: studentData.image },
-                projects: projects as Record<string, unknown>[], projectReviews: projectReviews as Record<string, unknown>[], feedbacks: feedbacksData as Record<string, unknown>[],
-                projectReviewsReceived: projectReviewsReceived as Record<string, unknown>[], feedbacksReceived: feedbacksReceived as Record<string, unknown>[], patronage: patronage as Record<string, unknown> | null,
-                projectReviewsForWords: projectReviewsForWords as Record<string, unknown>[], feedbacksForWords: feedbacksForWords as Record<string, unknown>[]
-            });
-
-            const loginsToFetch = new Set<string>(); const highlights = wrappedData.highlights as Record<string, unknown>;
-            if ((highlights?.mostEvaluatedUser as Record<string, unknown>)?.login) loginsToFetch.add((highlights.mostEvaluatedUser as Record<string, unknown>).login as string);
-            if ((highlights?.mostEvaluatorUser as Record<string, unknown>)?.login) loginsToFetch.add((highlights.mostEvaluatorUser as Record<string, unknown>).login as string);
-
-            if (loginsToFetch.size > 0) {
-                const students = await Student.find({ login: { $in: Array.from(loginsToFetch) } }, { login: 1, image: 1 }).lean();
-                const loginImageMap: Record<string, unknown> = {}; (students as Record<string, unknown>[]).forEach(s => { loginImageMap[s.login as string] = s.image; });
-                if ((highlights?.mostEvaluatedUser as Record<string, unknown>)?.login) (highlights.mostEvaluatedUser as Record<string, unknown>).image = loginImageMap[(highlights.mostEvaluatedUser as Record<string, unknown>).login as string] || null;
-                if ((highlights?.mostEvaluatorUser as Record<string, unknown>)?.login) (highlights.mostEvaluatorUser as Record<string, unknown>).image = loginImageMap[(highlights.mostEvaluatorUser as Record<string, unknown>).login as string] || null;
-            }
-
-            return res.status(200).json({ ...wrappedData, user: { login: studentData.login, displayname: studentData.displayname, image: studentData.image }, watcherUser: { login: authReq.user?.login || 'unknown', displayname: authReq.user?.displayname || 'Unknown User', image: authReq.user?.image || null } });
+            return res.status(200).json({ message: 'Seneye görüşürüz! 👋' });
         }
+
+        // WRAPPED API - COMMENTED OUT FOR NEXT YEAR
+        // if (req.query.action === 'wrapped') {
+        //     const ProjectReview = getProjectReviewModel();
+        //     const year2025Start = '2025-01-01T00:00:00.000Z'; const year2025End = '2025-12-31T23:59:59.999Z';
+
+        //     const [projects, projectReviews, feedbacksData, projectReviewsReceived, feedbacksReceived, patronage, projectReviewsForWords, feedbacksForWords] = await Promise.all([
+        //         Project.find({ login: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
+        //         ProjectReview.find({ evaluator: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
+        //         Feedback.find({ evaluator: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
+        //         ProjectReview.find({ evaluated: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
+        //         Feedback.find({ evaluated: validatedLogin, date: { $gte: year2025Start, $lte: year2025End } }).lean(),
+        //         Patronage.findOne({ login: validatedLogin }).lean(),
+        //         ProjectReview.find({ evaluator: validatedLogin, date: { $gte: year2025Start, $lte: year2025End }, comment: { $exists: true, $nin: [null, ''] } }, { comment: 1, _id: 0 }).lean(),
+        //         Feedback.find({ evaluated: validatedLogin, date: { $gte: year2025Start, $lte: year2025End }, comment: { $exists: true, $nin: [null, ''] } }, { comment: 1, _id: 0 }).lean()
+        //     ]);
+
+        //     const wrappedData = generateWrappedSummary({
+        //         student: { pool_year: studentData.pool_year as string, login: studentData.login as string, displayname: studentData.displayname as string, image: studentData.image },
+        //         projects: projects as Record<string, unknown>[], projectReviews: projectReviews as Record<string, unknown>[], feedbacks: feedbacksData as Record<string, unknown>[],
+        //         projectReviewsReceived: projectReviewsReceived as Record<string, unknown>[], feedbacksReceived: feedbacksReceived as Record<string, unknown>[], patronage: patronage as Record<string, unknown> | null,
+        //         projectReviewsForWords: projectReviewsForWords as Record<string, unknown>[], feedbacksForWords: feedbacksForWords as Record<string, unknown>[]
+        //     });
+
+        //     const loginsToFetch = new Set<string>(); const highlights = wrappedData.highlights as Record<string, unknown>;
+        //     if ((highlights?.mostEvaluatedUser as Record<string, unknown>)?.login) loginsToFetch.add((highlights.mostEvaluatedUser as Record<string, unknown>).login as string);
+        //     if ((highlights?.mostEvaluatorUser as Record<string, unknown>)?.login) loginsToFetch.add((highlights.mostEvaluatorUser as Record<string, unknown>).login as string);
+
+        //     if (loginsToFetch.size > 0) {
+        //         const students = await Student.find({ login: { $in: Array.from(loginsToFetch) } }, { login: 1, image: 1 }).lean();
+        //         const loginImageMap: Record<string, unknown> = {}; (students as Record<string, unknown>[]).forEach(s => { loginImageMap[s.login as string] = s.image; });
+        //         if ((highlights?.mostEvaluatedUser as Record<string, unknown>)?.login) (highlights.mostEvaluatedUser as Record<string, unknown>).image = loginImageMap[(highlights.mostEvaluatedUser as Record<string, unknown>).login as string] || null;
+        //         if ((highlights?.mostEvaluatorUser as Record<string, unknown>)?.login) (highlights.mostEvaluatorUser as Record<string, unknown>).image = loginImageMap[(highlights.mostEvaluatorUser as Record<string, unknown>).login as string] || null;
+        //     }
+
+        //     return res.status(200).json({ ...wrappedData, user: { login: studentData.login, displayname: studentData.displayname, image: studentData.image }, watcherUser: { login: authReq.user?.login || 'unknown', displayname: authReq.user?.displayname || 'Unknown User', image: authReq.user?.image || null } });
+        // }
 
         // DEFAULT: Student details
         const projects = await Project.find({ login: validatedLogin }).lean();

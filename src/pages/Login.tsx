@@ -1,6 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import Snowfall from 'react-snowfall';
 
 const Login = () => {
   const { user, login, loading } = useAuth();
@@ -8,7 +7,6 @@ const Login = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <Snowfall style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: 9999 }} />
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
           <p className="text-slate-300">Loading...</p>
@@ -23,7 +21,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <Snowfall style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: 9999 }} />
       <div className="w-full max-w-md">
         <div className="card border-2 border-blue-500/30 bg-slate-900/50 backdrop-blur-sm">
           {/* Logo and Title */}

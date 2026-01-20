@@ -6,7 +6,6 @@ import axios from 'axios';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { StudentModal } from '../components/StudentModal';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
-import Snowfall from 'react-snowfall';
 
 interface Project {
   project: string;
@@ -119,7 +118,6 @@ function Dashboard() {
 
   return (
     <div style={{ backgroundColor: 'var(--bg-primary)' }} className="min-h-screen transition-colors duration-300">
-      <Snowfall style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: 9999 }} />
       {/* Header */}
       <header style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-secondary)' }} className="border-b backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -179,27 +177,24 @@ function Dashboard() {
           </div>
         ) : data ? (
           <>
-            {/* Wrapped Announcement Banner */}
+            {/* Announcement Banner */}
             {user && (
-              <div className="card mb-6 bg-linear-to-r from-purple-500/10 to-pink-500/10 border-2 border-purple-500/30">
+              <div className="card mb-6 bg-linear-to-r from-blue-500/10 to-cyan-500/10 border-2 border-blue-500/30">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="text-4xl">🎁</div>
+                    <div className="text-4xl">📢</div>
                     <div>
                       <h3 className="text-lg font-bold text-(--text-primary) mb-1">
-                        Your 2025 Wrapped is Ready!
+                        Bilgilendirme
                       </h3>
                       <p className="text-(--text-secondary) text-sm">
-                        Check out your year in review and see your achievements
+                        Belli bir süre yeni güncelleme hata düzeltme ve yeni özellik eklemeye ara veriyorum. Sayfa üzerinden duyuru eklemek isteyen ya da siteyle ilgili geliştirme yapmak isteyen arkadaşlar bana slack üzerinden ulaşabilir. Proje açık kaynak kodludur ve attığınız pull requestler benim tarafımdan okunur. Teşekkürler!
+                        <br />
+                        <strong>iduman</strong>
+                        <a href='https://github.com/cilginsinek/42watcher'>Kaynak Kod</a>
                       </p>
                     </div>
                   </div>
-                  <Link
-                    to={`/students/${user.login}/wrapped`}
-                    className="btn-primary whitespace-nowrap bg-linear-to-r from-purple-500 to-pink-500 border-0"
-                  >
-                    View My Wrapped 🎉
-                  </Link>
                 </div>
               </div>
             )}

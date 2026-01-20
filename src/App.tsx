@@ -12,7 +12,7 @@ import CookiePolicy from './pages/CookiePolicy'
 import TermsOfUse from './pages/TermsOfUse'
 import Disclaimer from './pages/Disclaimer'
 import Contact from './pages/Contact'
-import Wrapped from './pages/Wrapped'
+// import Wrapped from './pages/Wrapped'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -45,14 +45,14 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route
+      {/* <Route
         path="/students/:login/wrapped"
         element={
           <ProtectedRoute>
             <Wrapped />
           </ProtectedRoute>
         }
-      />
+      /> */}
       <Route
         path="/reviews"
         element={

@@ -4,7 +4,6 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import Snowfall from 'react-snowfall';
 
 interface Student {
   id: number;
@@ -114,7 +113,6 @@ function Home() {
 
   return (
     <div style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }} className="min-h-screen transition-colors duration-300">
-      <Snowfall style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: 9999 }} />
       {/* Header */}
       <header style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg-secondary)' }} className="sticky top-0 z-40 border-b backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 py-4">

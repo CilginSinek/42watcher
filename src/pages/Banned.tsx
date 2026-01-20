@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ThemeToggle } from '../components/ThemeToggle';
-import Snowfall from 'react-snowfall';
 
 function Banned() {
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ function Banned() {
 
   return (
     <div style={{ backgroundColor: 'var(--bg-primary)' }} className="min-h-screen transition-colors duration-300 flex items-center justify-center">
-      <Snowfall style={{ position: 'fixed', width: '100vw', height: '100vh', zIndex: 9999 }} />
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
