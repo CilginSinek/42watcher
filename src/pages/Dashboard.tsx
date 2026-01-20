@@ -188,10 +188,10 @@ function Dashboard() {
                         Bilgilendirme
                       </h3>
                       <p className="text-(--text-secondary) text-sm">
-                        Belli bir süre yeni güncelleme hata düzeltme ve yeni özellik eklemeye ara veriyorum. Sayfa üzerinden duyuru eklemek isteyen ya da siteyle ilgili geliştirme yapmak isteyen arkadaşlar bana slack üzerinden ulaşabilir. Proje açık kaynak kodludur ve attığınız pull requestler benim tarafımdan okunur. Teşekkürler!
+                        Belli bir süre yeni güncelleme hata düzeltme ve yeni özellik eklemeye ara veriyorum. Sayfa üzerinden duyuru eklemek isteyen ya da siteyle ilgili geliştirme yapmak isteyen arkadaşlar bana slack üzerinden ulaşabilir. Proje açık kaynak kodludur ve attığınız pull requestler benim tarafımdan okunur. Teşekkürler! <a target='_blank' rel='noopener noreferrer' href='https://github.com/cilginsinek/42watcher'>Kaynak Kod</a>
                         <br />
                         <strong>iduman</strong>
-                        <a href='https://github.com/cilginsinek/42watcher'>Kaynak Kod</a>
+                        
                       </p>
                     </div>
                   </div>
