@@ -1,6 +1,37 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose from 'mongoose';
-import { logEvent } from '../utils/logger';
+
+// ============ EVENTLOG SCHEMA ============
+const eventlogSchema = new mongoose.Schema({
+    login: { type: String, required: true, index: true },
+    campusId: { type: Number, required: true, index: true },
+    eventType: { type: String, required: true },
+    eventData: { type: mongoose.Schema.Types.Mixed },
+    ip: { type: String },
+    userAgent: { type: String },
+    method: { type: String },
+    path: { type: String },
+    timestamp: { type: Date, default: Date.now }
+}, { timestamps: true });
+eventlogSchema.index({ login: 1, eventType: 1, timestamp: -1 });
+eventlogSchema.index({ campusId: 1, eventType: 1, timestamp: -1 });
+
+function getEventLogModel(db2: mongoose.Connection) {
+    return db2.models.EventLog || db2.model('EventLog', eventlogSchema);
+}
+
+async function logEvent(req: VercelRequest, db2: mongoose.Connection, login: string, campusId: number, eventType: string, eventData: Record<string, unknown> = {}): Promise<void> {
+    try {
+        const forwardedFor = req.headers['x-forwarded-for'];
+        const realIp = req.headers['x-real-ip'];
+        const clientIp = (typeof forwardedFor === 'string' ? forwardedFor.split(',')[0]?.trim() : null) || (typeof realIp === 'string' ? realIp : null) || 'unknown';
+        const userAgent = (req.headers['user-agent'] as string) || 'unknown';
+        const EventLog = getEventLogModel(db2);
+        await EventLog.create({ login, campusId, eventType, eventData, ip: clientIp, userAgent, method: req.method, path: req.url || 'unknown', timestamp: new Date() });
+    } catch (error) {
+        console.error('EventLog error:', error instanceof Error ? error.message : 'Unknown error');
+    }
+}
 
 // ============ MONGODB CONNECTION ============
 const MONGODB_URI = process.env.MONGODB_URI || '';
