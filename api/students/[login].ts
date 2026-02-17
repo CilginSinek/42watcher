@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose from 'mongoose';
+import { logEvent } from '../utils/logger';
 
 // ============ MONGODB CONNECTION ============
 const MONGODB_URI = process.env.MONGODB_URI || '';
@@ -251,6 +252,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const patronageData = await Patronage.findOne({ login: validatedLogin }).lean();
         const children = (patronageData as Record<string, unknown>)?.children || [];
         const godfathers = (patronageData as Record<string, unknown>)?.godfathers || [];
+
+        // Log student view event
+        if (authReq.user?.login && authReq.user?.campusId) {
+            await logEvent(req, cachedDB2.conn!, authReq.user.login as string, authReq.user.campusId as number, 'student_view', {
+                viewedStudent: validatedLogin,
+                action: req.query.action || 'profile'
+            });
+        }
 
         res.json({
             student: { id: studentData.id, login: studentData.login, displayname: studentData.displayname, email: studentData.email, image: studentData.image, correction_point: studentData.correction_point, wallet: studentData.wallet, location: studentData.location, "active?": studentData["active?"], "alumni?": studentData["alumni?"], is_piscine: studentData.is_piscine, is_trans: studentData.is_trans, grade: studentData.grade, project_count: projects.length, projects: projectsData, patronage: { godfathers, children }, feedbackCount, avgRating: Math.round(avgRating * 100) / 100, logTimes, attendanceDays }

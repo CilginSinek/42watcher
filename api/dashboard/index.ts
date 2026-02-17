@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose from 'mongoose';
+import { logEvent } from '../utils/logger';
 
 // ============ MONGODB CONNECTION ============
 const MONGODB_URI = process.env.MONGODB_URI || '';
@@ -215,6 +216,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const dailyCount: Record<string, number> = { Mon: dailyActivity.Mon.size, Tue: dailyActivity.Tue.size, Wed: dailyActivity.Wed.size, Thu: dailyActivity.Thu.size, Fri: dailyActivity.Fri.size, Sat: dailyActivity.Sat.size, Sun: dailyActivity.Sun.size };
         const maxWeekly = Math.max(...Object.values(dailyCount), 1);
         const weeklyOccupancy = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({ day, count: dailyCount[day], occupancy: Math.round((dailyCount[day] / maxWeekly) * 100) }));
+
+        // Log dashboard view event
+        const authReq = req as AuthReq;
+        if (authReq.user?.login && authReq.user?.campusId) {
+            await logEvent(req, cachedDB2.conn!, authReq.user.login as string, authReq.user.campusId as number, 'dashboard_view', {
+                campusId: validatedCampusId
+            });
+        }
 
         res.json({ currentMonth, topProjectSubmitters, topLocationStats, allTimeProjects, allTimeWallet, allTimePoints, allTimeLevels, gradeDistribution, weeklyOccupancy });
     } catch (error) {

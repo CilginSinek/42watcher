@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose from 'mongoose';
+import { logEvent } from '../utils/logger';
 
 // ============ MONGODB CONNECTION ============
 const MONGODB_URI = process.env.MONGODB_URI || '';
@@ -287,6 +288,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const [students, countResult] = await Promise.all([Student.aggregate(pipeline), Student.aggregate(countPipeline)]);
         const total = countResult.length > 0 ? countResult[0].total : 0;
         const totalPages = Math.ceil(total / validatedLimit);
+
+        // Log the event
+        const authReq = req as AuthReq;
+        if (authReq.user?.login && authReq.user?.campusId) {
+            await logEvent(req, cachedDB2.conn!, authReq.user.login as string, authReq.user.campusId as number, 'students_query', {
+                filters: { search: validatedSearch, campusId: validatedCampusId, status: validatedStatus, sortBy: validatedSort, order: validatedOrder },
+                resultCount: total,
+                page: validatedPage
+            });
+        }
 
         res.json({ students, pagination: { total, page: validatedPage, limit: validatedLimit, totalPages } });
     } catch (error) {

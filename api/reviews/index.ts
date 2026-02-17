@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import mongoose from 'mongoose';
+import { logEvent } from '../utils/logger';
 
 // ============ MONGODB CONNECTION ============
 const MONGODB_URI = process.env.MONGODB_URI || '';
@@ -145,8 +146,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         if (req.query.status && typeof req.query.status === 'string') {
-            const sanitized = req.query.status.replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50);
-            if (sanitized) filter.status = sanitized;
+            // Don't sanitize status - use exact match from database
+            // Status values can contain special chars like "can't_support_/_explain_code"
+            const statusValue = req.query.status.trim().substring(0, 100);
+            if (statusValue) filter.status = statusValue;
         }
 
         if (req.query.score) {
@@ -178,6 +181,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ProjectReview.find(filter).sort({ date: -1, createdAt: -1 }).skip(skip).limit(validatedLimit).lean(),
             ProjectReview.countDocuments(filter)
         ]);
+
+        // Log the event
+        const authReq = req as AuthReq;
+        if (authReq.user?.login && authReq.user?.campusId) {
+            await logEvent(req, cachedDB2.conn!, authReq.user.login as string, authReq.user.campusId as number, 'reviews_query', {
+                filters: { projectName: req.query.projectName, campusId: req.query.campusId, evaluatorLogin: req.query.evaluatorLogin, evaluatedLogin: req.query.evaluatedLogin, score: req.query.score, status: req.query.status, dateFilter: req.query.dateFilter },
+                resultCount: total,
+                page: validatedPage
+            });
+        }
 
         const enrichedReviews = await Promise.all(
             reviews.map(async (review: Record<string, unknown>) => {
